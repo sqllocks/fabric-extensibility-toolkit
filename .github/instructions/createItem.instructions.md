@@ -1117,7 +1117,7 @@ export function [ItemName]ItemEditorRibbon(props: [ItemName]ItemEditorRibbonProp
 
 ### Step 6: Create Manifest Configuration
 
-#### 6.1: Create XML Manifest Template (`Workload/Manifest/items/[ItemName]/[ItemName]Item.xml`)
+#### 6.1: Create XML Manifest Template (`Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml`)
 
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
@@ -1133,7 +1133,7 @@ export function [ItemName]ItemEditorRibbon(props: [ItemName]ItemEditorRibbonProp
 - Validates XML structure against Fabric schemas
 - Recognizes template processing patterns
 
-#### 6.2: Create JSON Manifest (`Workload/Manifest/items/[ItemName]/[ItemName]Item.json`)
+#### 6.2: Create JSON Manifest (`Workload/Manifest/items/[ItemName]Item/[ItemName]Item.json`)
 
 ```json
 {
@@ -1519,7 +1519,7 @@ Workload/app/items/
 **Manifest Structure**:
 ```
 Workload/Manifest/items/
-└── HelloWorld/
+└── HelloWorldItem/
     ├── HelloWorldItem.json
     ├── HelloWorldItem.xml
     └── ItemDefinition/
@@ -1588,8 +1588,8 @@ When creating a new item, ensure all these components are created:
 - [ ] `Workload/app/items/[ItemName]Item/[ItemName]ItemDefaultView.tsx`
 - [ ] `Workload/app/items/[ItemName]Item/[ItemName]ItemRibbon.tsx`
 - [ ] `Workload/app/items/[ItemName]Item/[ItemName]Item.scss`
-- [ ] `Workload/Manifest/items/[ItemName]/[ItemName]Item.json`
-- [ ] `Workload/Manifest/items/[ItemName]/[ItemName]Item.xml`
+- [ ] `Workload/Manifest/items/[ItemName]Item/[ItemName]Item.json`
+- [ ] `Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml`
 - [ ] `Workload/Manifest/assets/images/[ItemName]Item-icon.png`
 
 ### 🔧 Configuration Updated (CRITICAL)
