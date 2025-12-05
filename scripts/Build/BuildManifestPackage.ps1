@@ -31,16 +31,13 @@ Write-Host "Loaded environment variables from $envFile ($Environment environment
 # Copy template files to temp directory and replace variables
 ################################################
 $templatePath = Join-Path $PSScriptRoot "..\..\Workload\Manifest"
-$tempPath = Join-Path $PSScriptRoot "..\..\build\Manifest\temp"
+# Use a unique system temp folder to avoid file locking issues
+$guid = [Guid]::NewGuid().ToString()
+$tempPath = Join-Path ([System.IO.Path]::GetTempPath()) "Fabric_Manifest_Build_$guid"
 $outputDir = Join-Path $PSScriptRoot "..\..\build\Manifest\"
 
-# Ensure temp directory exists and is clean
-if (Test-Path $tempPath) {
-    Write-Host "Cleaning existing temp directory..."
-    Remove-Item $tempPath -Recurse -Force    
-}
+Write-Host "Using temporary directory: $tempPath"
 New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
-$tempPath = Resolve-Path $tempPath
 
 
 Write-Host "Copying template files from $templatePath to $tempPath"
@@ -165,4 +162,10 @@ if($IsWindows){
 }
 
 Write-Host "✅ Created the new ManifestPackage in $outputDir." -ForegroundColor Blue
+
+# Cleanup temp directory
+if (Test-Path $tempPath) {
+    Write-Host "Cleaning up temporary directory..."
+    Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
+}
 
