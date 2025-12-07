@@ -38,8 +38,8 @@ Automates syncing changes from the staging repository to the public repository b
 | `-PublicRepoUrl` | URL of public repository | `https://github.com/microsoft/fabric-extensibility-toolkit.git` | ❌ |
 | `-PublicRepoOwner` | GitHub repository owner | `microsoft` | ❌ |
 | `-PublicRepoName` | GitHub repository name | `fabric-extensibility-toolkit` | ❌ |
-| `-SourceBranch` | Source branch to sync from | `main` | ❌ |
-| `-TargetBranch` | Target branch in public repo | `main` | ❌ |
+| `-SourceBranch` | Branch to sync from staging and push to public repo | `main` | ❌ |
+| `-TargetBranch` | Target branch for PR in public repo | `main` | ❌ |
 | `-Force` | Skip confirmation prompts | `false` | ❌ |
 | `-DryRun` | Show what would be done without making changes | `false` | ❌ |
 
@@ -61,23 +61,22 @@ Automates syncing changes from the staging repository to the public repository b
 2. **Preparation**
    - Creates temporary working directory
    - Clones public repository
-   - Creates or checks out sync branch (`dev/sync/{VERSION}`)
+   - Checks out source branch in public repository
 
 3. **Synchronization**
    - Copies files from staging repository
    - Applies exclusion patterns (see below)
-   - Preserves git history in target
+   - Commits changes to source branch
 
 4. **Publication**
-   - Commits changes with sync message
-   - Pushes sync branch to public repository
-   - Creates Pull Request targeting main branch
+   - Pushes source branch to public repository
+   - Creates Pull Request from source branch to target branch
 
 5. **Cleanup**
    - Removes temporary directories
    - Reports completion status
 
-> **Note**: Tags and README updates are handled separately in the public repository after PR is merged.
+> **Note**: The script syncs directly from staging repository's source branch to the public repository's source branch, then creates a PR to the target branch. No intermediate branches are created.
 
 #### Exclusion Patterns
 
@@ -153,17 +152,23 @@ Step-by-step upgrade instructions.
 
 #### Branch Handling
 
-The script uses `dev/sync/{VERSION}` branch naming convention and follows a PR-only workflow for the target repository:
+The script performs direct branch-to-branch syncing:
 
-**Target Branch Setup**: Always ensures the sync branch is created from the latest target branch (usually `main`)
+**Source Branch**: The branch in the staging repository to sync from (default: `main`)
 
-**New Branch**: Creates `dev/sync/{VERSION}` from the target branch with latest changes
+**Target Branch**: The branch in the public repository to create the PR against (default: `main`)
 
-**Existing Local Branch**: Switches to it and merges latest changes from target branch
+**Workflow**:
+1. Clones public repository
+2. Checks out source branch (creates if it doesn't exist from target branch)
+3. Syncs files from staging repository's source branch
+4. Commits and pushes to source branch in public repository
+5. Creates Pull Request from source branch → target branch
 
-**Existing Remote Branch**: Checks out locally and merges latest changes from target branch
-
-**PR-Only Workflow**: Creates Pull Request targeting main branch for review and merge
+**Example Workflows**:
+- `main` → `main`: Standard release sync (default)
+- `dev` → `main`: Sync development branch for review before merging to main
+- `hotfix` → `main`: Emergency fixes that need quick review
 
 **Safe Updates**: Uses `--force-with-lease` when pushing to protect against overwrites
 
