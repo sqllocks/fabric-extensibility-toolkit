@@ -153,30 +153,39 @@ Step-by-step upgrade instructions.
 
 #### Branch Handling
 
-The script creates a versioned release branch for safe, reviewable releases:
+The script creates versioned release branches differently based on version type:
 
 **Source Branch** (staging): The branch in staging repository to sync from (default: `main`)
 
-**Release Branch** (public): Automatically created as `dev/release/{VERSION}` in public repository
+**Release Branch** (public): 
+- **Main versions** (e.g., `2025.12`): Creates new `dev/release/2025.12` branch
+- **Patch versions** (e.g., `2025.12.1`): Uses existing `dev/release/2025.12` branch
 
 **Target Branch** (public): The branch in public repository to create the PR against (default: `main`)
 
 **Workflow**:
 1. Clones public repository
-2. Creates/updates `dev/release/{VERSION}` branch (from target branch if new)
-3. Syncs files from staging repository's source branch
-4. Commits and pushes to `dev/release/{VERSION}` in public repository
-5. Creates Pull Request from `dev/release/{VERSION}` → target branch
+2. **For main versions**: Creates `dev/release/{VERSION}` from target branch if it doesn't exist
+3. **For patch versions**: Checks out existing `dev/release/{MAIN_VERSION}` (errors if not found)
+4. Syncs files from staging repository's source branch
+5. Commits and pushes to release branch in public repository
+6. Creates Pull Request from release branch → target branch
 
 **Example Workflows**:
-- Staging `main` → Public `dev/release/2025.11` → PR to `main`: Standard monthly release (default)
-- Staging `dev` → Public `dev/release/2025.11.1` → PR to `main`: Patch release from development branch
-- Staging `hotfix` → Public `dev/release/2025.11.2` → PR to `main`: Emergency hotfix release
+- Staging `main` → Public `dev/release/2025.12` → PR to `main`: Monthly release (creates new branch)
+- Staging `main` → Public `dev/release/2025.12` → PR to `main`: First patch (uses existing branch)
+- Staging `hotfix` → Public `dev/release/2025.12` → PR to `main`: Second patch (uses existing branch)
+
+**Branch Lifecycle**:
+1. **2025.12** (main version): Creates `dev/release/2025.12` → PR → merge to main
+2. **2025.12.1** (patch): Updates `dev/release/2025.12` → PR → merge to main  
+3. **2025.12.2** (patch): Updates `dev/release/2025.12` → PR → merge to main
+4. **2026.1** (main version): Creates `dev/release/2026.1` → PR → merge to main
 
 **Benefits**:
 - **Safety**: Release branch can be reviewed and tested before merging to main
 - **Versioning**: Clear version tracking with dedicated branches
-- **Flexibility**: Multiple commits can be added to same release branch if needed
+- **Patch Management**: All patches for a version use the same release branch
 - **Rollback**: Release branch can be deleted without affecting main if issues are found
 
 **Safe Updates**: Uses `--force-with-lease` when pushing to protect against overwrites
@@ -189,6 +198,7 @@ Common issues and solutions:
 |-------|-------|----------|
 | "Invalid version format" | Version doesn't match YYYY.MM or YYYY.MM.P | Use correct format |
 | "Release notes not found" | Missing release notes file | Create file at expected path (docs/ReleaseNotes/{YYYY}/v{VERSION}.md) |
+| "Release branch does not exist for patch version" | Trying to create patch before main version | Create main version first (e.g., 2025.12 before 2025.12.1) |
 | "Git command failed" | Git repository issues | Check git status and permissions |
 | "GitHub CLI not authenticated" | gh not logged in | Run `gh auth login` |
 | "Robocopy failed" | File copy issues | Check file permissions |
@@ -229,8 +239,10 @@ scripts/_internal/
 ### Version Management
 
 - Use semantic versioning principles within YYYY.MM[.P] format
-- Use YYYY.MM for monthly feature releases
-- Use YYYY.MM.P for patches and hotfixes within a month
+- Use YYYY.MM for monthly feature releases (creates new release branch)
+- Use YYYY.MM.P for patches and hotfixes (uses existing release branch)
+- **Important**: Always create main version (e.g., 2025.12) before patches (e.g., 2025.12.1)
+- Patch versions must have corresponding main version release branch already created
 - Increment month for feature releases
 - Use year boundary for major releases
 

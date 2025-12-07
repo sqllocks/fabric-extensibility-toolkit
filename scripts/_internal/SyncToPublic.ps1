@@ -149,6 +149,21 @@ function Test-VersionFormat {
     return $Version -match '^\d{4}\.\d{1,2}(\.\d+)?$'
 }
 
+function Test-IsPatchVersion {
+    param([string]$Version)
+    # Check if version has patch number (YYYY.MM.P format)
+    return $Version -match '^\d{4}\.\d{1,2}\.\d+$'
+}
+
+function Get-MainVersion {
+    param([string]$Version)
+    # Extract main version (YYYY.MM) from full version
+    if ($Version -match '^(\d{4}\.\d{1,2})') {
+        return $matches[1]
+    }
+    return $Version
+}
+
 function Test-ReleaseNotesExist {
     param([string]$Version)
     $releaseNotesPath = Get-ReleaseNotesPath $Version
@@ -303,13 +318,22 @@ try {
     
     # Handle DryRun mode
     if ($DryRun) {
-        $releaseBranch = "dev/release/$Version"
+        $isPatch = Test-IsPatchVersion $Version
+        if ($isPatch) {
+            $mainVersion = Get-MainVersion $Version
+            $releaseBranch = "dev/release/$mainVersion"
+            $branchNote = "(patch version - uses existing release branch)"
+        } else {
+            $releaseBranch = "dev/release/$Version"
+            $branchNote = "(main version - creates new release branch)"
+        }
+        
         Write-StepHeader "DRY RUN MODE - Showing what would be done:"
         Write-Information "✓ Version: $Version"
         Write-Information "✓ Release notes: $releaseNotesPath"
         Write-Information "✓ Public repo URL: $PublicRepoUrl"
         Write-Information "✓ Source branch (staging): $SourceBranch"
-        Write-Information "✓ Release branch (public): $releaseBranch"
+        Write-Information "✓ Release branch (public): $releaseBranch $branchNote"
         Write-Information "✓ Target branch (public): $TargetBranch"
         Write-Information "✓ Would sync files from: $ProjectRoot"
         Write-Information "✓ Would exclude patterns: $($ExcludePatterns -join ', ')"
@@ -350,7 +374,19 @@ try {
     
     # Checkout or create dev/release branch in public repo
     Write-StepHeader "Step 3.1: Preparing Release Branch"
-    $releaseBranch = "dev/release/$Version"
+    
+    # Determine which branch to use based on version type
+    $isPatch = Test-IsPatchVersion $Version
+    if ($isPatch) {
+        # Patch versions use the main version's release branch (e.g., 2025.12.1 uses dev/release/2025.12)
+        $mainVersion = Get-MainVersion $Version
+        $releaseBranch = "dev/release/$mainVersion"
+        Write-Information "Patch version detected - using release branch: $releaseBranch"
+    } else {
+        # Main versions create their own release branch (e.g., 2025.12 creates dev/release/2025.12)
+        $releaseBranch = "dev/release/$Version"
+        Write-Information "Main version detected - using release branch: $releaseBranch"
+    }
     
     try {
         Push-Location $publicRepoDir
@@ -372,7 +408,11 @@ try {
             Write-StepSuccess "Checked out existing release branch: $releaseBranch"
         }
         else {
-            # Create new branch from target branch
+            if ($isPatch) {
+                Write-StepError "Release branch $releaseBranch does not exist for patch version $Version"
+                throw "Patch versions require an existing release branch. Please create main version $mainVersion first."
+            }
+            # Create new branch from target branch (only for main versions)
             Invoke-GitCommand "checkout -b $releaseBranch origin/$TargetBranch" -WorkingDirectory $publicRepoDir
             Write-StepSuccess "Created new release branch: $releaseBranch from $TargetBranch"
         }
