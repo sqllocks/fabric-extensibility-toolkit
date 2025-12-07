@@ -1,16 +1,14 @@
 <#
 .SYNOPSIS
-    Creates a new release by syncing changes to public repository, creating PR, and tagging version
+    Syncs changes from staging repository to public repository and creates a Pull Request
 
 .DESCRIPTION
-    This script automates the release process for the Microsoft Fabric Extensibility Toolkit:
+    This script automates syncing changes to the public Microsoft Fabric Extensibility Toolkit repository:
     1. Validates the version number format
     2. Checks for corresponding release notes
-    3. Creates/updates release branch from target branch (dev/release/{VERSION})
+    3. Creates/updates sync branch (dev/sync/{VERSION})
     4. Syncs changes to public repository (with exclusions)
-    5. Creates a Pull Request (target repository requires PR-only workflow)
-    6. Updates README.md with latest release information
-    7. Tags the version
+    5. Creates a Pull Request for review
 
 .PARAMETER Version
     The version number in format YYYY.MM.P (e.g., 2025.11.1)
@@ -28,7 +26,7 @@
     The source branch to sync from (default: main)
 
 .PARAMETER TargetBranch
-    The target branch for the Pull Request (default: main) - direct commits not allowed
+    The target branch for the Pull Request (default: main)
 
 .PARAMETER Force
     Skip confirmation prompts
@@ -37,16 +35,16 @@
     Perform a dry run - show what would be done without making changes (alias: WhatIf)
 
 .EXAMPLE
-    .\CreateRelease.ps1 -Version "2025.11"
-    Creates release branch dev/release/2025.11 for the November 2025 release
+    .\SyncToPublic.ps1 -Version "2025.11"
+    Syncs changes and creates PR for version 2025.11
 
 .EXAMPLE
-    .\CreateRelease.ps1 -Version "2025.11" -DryRun
-    Shows what would be done for the release without making changes
+    .\SyncToPublic.ps1 -Version "2025.11" -DryRun
+    Shows what would be done without making changes
 
 .EXAMPLE
-    .\CreateRelease.ps1 -Version "2025.11.1" -Force
-    Creates a patch release with confirmation prompts skipped
+    .\SyncToPublic.ps1 -Version "2025.11.1" -Force
+    Syncs patch release changes with confirmation prompts skipped
 
 #>
 
@@ -86,7 +84,7 @@ $InformationPreference = "Continue"
 $ScriptRoot = $PSScriptRoot
 $ProjectRoot = Split-Path (Split-Path $ScriptRoot -Parent) -Parent
 $ReleaseNotesDir = Join-Path $ProjectRoot "docs\ReleaseNotes"
-$TempDir = Join-Path $env:TEMP "fabric-release-$Version"
+$TempDir = Join-Path $env:TEMP "fabric-sync-$Version"
 
 # Files and directories to exclude from sync
 $ExcludePatterns = @(
@@ -264,14 +262,14 @@ function Test-GitHubCLI {
     }
 }
 
-function New-ReleaseBranch {
+function New-SyncBranch {
     param(
         [string]$Version,
         [string]$WorkingDirectory,
         [string]$TargetBranch = "main"
     )
     
-    $branchName = "dev/release/$Version"
+    $branchName = "dev/sync/$Version"
     
     try {
         Push-Location $WorkingDirectory
@@ -341,133 +339,16 @@ function New-ReleaseBranch {
         else {
             # Create new branch from target branch
             Invoke-GitCommand "checkout -b $branchName origin/$TargetBranch" -WorkingDirectory $WorkingDirectory
-            Write-StepSuccess "Created new feature branch: $branchName from $TargetBranch"
+            Write-StepSuccess "Created new sync branch: $branchName from $TargetBranch"
         }
         
         return $branchName
     }
     catch {
-        throw "Failed to create/checkout release branch: $_"
+        throw "Failed to create/checkout sync branch: $_"
     }
     finally {
         Pop-Location
-    }
-}
-
-function Update-GitTag {
-    param(
-        [string]$Version,
-        [string]$WorkingDirectory,
-        [string]$TagMessage
-    )
-    
-    $tagName = "v$Version"
-    
-    try {
-        Push-Location $WorkingDirectory
-        
-        # Check if tag already exists locally
-        $localTagExists = (git tag -l $tagName) -ne ""
-        
-        # Check if tag exists on remote
-        $remoteTagExists = $false
-        try {
-            git ls-remote --tags origin $tagName | Out-Null
-            $remoteTagExists = $LASTEXITCODE -eq 0
-        }
-        catch {
-            $remoteTagExists = $false
-        }
-        
-        if ($localTagExists) {
-            # Delete existing local tag
-            git tag -d $tagName | Out-Null
-            Write-StepSuccess "Removed existing local tag: $tagName"
-        }
-        
-        if ($remoteTagExists) {
-            # Delete existing remote tag
-            git push --delete origin $tagName | Out-Null
-            Write-StepSuccess "Removed existing remote tag: $tagName"
-        }
-        
-        # Create new tag
-        Invoke-GitCommand "tag -a $tagName -m `"$TagMessage`"" -WorkingDirectory $WorkingDirectory
-        Write-StepSuccess "Created new tag: $tagName"
-        
-        # Push the tag
-        Invoke-GitCommand "push origin $tagName" -WorkingDirectory $WorkingDirectory
-        Write-StepSuccess "Pushed tag to remote: $tagName"
-        
-        return $tagName
-    }
-    catch {
-        throw "Failed to update git tag: $_"
-    }
-    finally {
-        Pop-Location
-    }
-}
-
-function Update-ReadmeLatestRelease {
-    param(
-        [string]$Version,
-        [string]$ReadmePath = (Join-Path $ProjectRoot "README.md")
-    )
-    
-    if (-not (Test-Path $ReadmePath)) {
-        Write-StepWarning "README.md not found at: $ReadmePath"
-        return
-    }
-    
-    try {
-        # Get release notes path for the link
-        $releaseNotesPath = Get-ReleaseNotesPath $Version
-        $relativePath = $releaseNotesPath -replace [regex]::Escape($ProjectRoot), '' -replace '^\\', '' -replace '\\', '/'
-        
-        # Read the current README content
-        $content = Get-Content $ReadmePath -Raw
-        
-        # Define the pattern to match the "Latest Release" section
-        $pattern = '(?s)## Latest Release.*?\[View all release notes →\]\(docs/ReleaseNotes/\)'
-        
-        # Create the new release section - try to get a meaningful title from release notes
-        $releaseTitle = "Latest Release"
-        if (Test-Path $releaseNotesPath) {
-            $releaseContent = Get-Content $releaseNotesPath -Raw
-            # Look for overview section content or meaningful descriptions
-            if ($releaseContent -match '##?\s*🎯\s*Overview\s*\n\n([^\n]+)') {
-                $releaseTitle = $matches[1].Trim()
-            } elseif ($releaseContent -match '##?\s*Overview\s*\n\n([^\n]+)') {
-                $releaseTitle = $matches[1].Trim()  
-            } elseif ($releaseContent -match 'Major.*enhancement|Major.*toolkit.*enhancement') {
-                $releaseTitle = "Major Toolkit Enhancement"
-            } elseif ($releaseContent -match 'introduces.*components|standardized.*components') {
-                $releaseTitle = "Standardized Base Components"
-            } elseif ($releaseContent -match 'Bug.*fixes|fixes.*and.*improvements') {
-                $releaseTitle = "Bug Fixes and Improvements"
-            } else {
-                # Extract from the first line after the main heading
-                if ($releaseContent -match '# Microsoft Fabric Extensibility Toolkit v[\d\.]+\s*\n\n\*\*.*?\*\*.*?\n\n.*?\n\n([^\n]+)') {
-                    $releaseTitle = $matches[1].Trim()
-                }
-            }
-        }
-        
-        # Create the replacement text
-        $replacement = "## Latest Release`n`n📋 **[v$Version - $releaseTitle]($relativePath)**`n`nThis release introduces $releaseTitle. [View all release notes →](docs/ReleaseNotes/)"
-        
-        # Replace the existing section
-        if ($content -match $pattern) {
-            $newContent = $content -replace $pattern, $replacement
-            Set-Content $ReadmePath -Value $newContent -NoNewline
-            Write-StepSuccess "Updated README.md with latest release: v$Version"
-        } else {
-            Write-StepWarning "Could not find 'Latest Release' section in README.md to update"
-        }
-    }
-    catch {
-        Write-StepError "Failed to update README.md: $_"
     }
 }
 
@@ -476,7 +357,7 @@ function Update-ReadmeLatestRelease {
 #region Main Script
 
 try {
-    Write-StepHeader "Starting Release Process for Version $Version"
+    Write-StepHeader "Starting Sync Process for Version $Version"
 
     # Step 1: Validate environment
     Write-StepHeader "Step 1: Validating Environment"
@@ -516,7 +397,7 @@ try {
         Write-Information "✓ Version: $Version"
         Write-Information "✓ Release notes: $releaseNotesPath"
         Write-Information "✓ Public repo URL: $PublicRepoUrl"
-        Write-Information "✓ Feature branch: dev/release/$Version"
+        Write-Information "✓ Sync branch: dev/sync/$Version"
         Write-Information "✓ Target branch: $TargetBranch"
         Write-Information "✓ Would sync files from: $ProjectRoot"
         Write-Information "✓ Would exclude patterns: $($ExcludePatterns -join ', ')"
@@ -527,8 +408,6 @@ try {
             Write-Information "⚠ Would skip PR creation (GitHub CLI not available)"
         }
         
-        Write-Information "✓ Would update README.md with latest release link"
-        Write-Information "✓ Would create Git tag: v$Version"
         Write-StepSuccess "DRY RUN completed - no changes made"
         return
     }
@@ -557,8 +436,8 @@ try {
     Invoke-GitCommand "clone $PublicRepoUrl `"$publicRepoDir`"" -WorkingDirectory $TempDir
     Write-StepSuccess "Cloned public repository"
     
-    # Create or checkout feature branch
-    $featureBranch = New-ReleaseBranch -Version $Version -WorkingDirectory $publicRepoDir -TargetBranch $TargetBranch
+    # Create or checkout sync branch
+    $syncBranch = New-SyncBranch -Version $Version -WorkingDirectory $publicRepoDir -TargetBranch $TargetBranch
     
     # Step 4: Sync changes
     Write-StepHeader "Step 4: Syncing Changes"
@@ -577,26 +456,26 @@ try {
         return
     }
     
-    $commitMessage = "Release v$Version`n`nSynced changes for version $Version release"
+    $commitMessage = "Sync v$Version`n`nSynced changes from staging repository for version $Version"
     Invoke-GitCommand "commit -m `"$commitMessage`"" -WorkingDirectory $publicRepoDir
     Write-StepSuccess "Committed changes"
     
     # Step 6: Push branch
-    Write-StepHeader "Step 6: Pushing Feature Branch"
+    Write-StepHeader "Step 6: Pushing Sync Branch"
     
     try {
         # Use --force-with-lease to safely update existing branches
-        Invoke-GitCommand "push origin $featureBranch --force-with-lease" -WorkingDirectory $publicRepoDir
-        Write-StepSuccess "Pushed feature branch to remote"
+        Invoke-GitCommand "push origin $syncBranch --force-with-lease" -WorkingDirectory $publicRepoDir
+        Write-StepSuccess "Pushed sync branch to remote"
     }
     catch {
         try {
             # Fallback to regular push for new branches
-            Invoke-GitCommand "push origin $featureBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Pushed new feature branch to remote"
+            Invoke-GitCommand "push origin $syncBranch" -WorkingDirectory $publicRepoDir
+            Write-StepSuccess "Pushed new sync branch to remote"
         }
         catch {
-            Write-StepError "Failed to push feature branch: $_"
+            Write-StepError "Failed to push sync branch: $_"
             throw
         }
     }
@@ -611,9 +490,9 @@ try {
             # Read release notes for PR body
             $releaseNotes = Get-Content $releaseNotesPath -Raw
             $prBody = @"
-## Release v$Version
+## Sync v$Version
 
-This PR contains the changes for version $Version release.
+This PR syncs changes from the staging repository for version $Version.
 
 ### Release Notes
 
@@ -629,84 +508,33 @@ $releaseNotes
 - [x] Version validated
 - [x] Changes synced from staging
 - [ ] Tests pass
-- [ ] Documentation updated
+- [ ] Documentation reviewed
 - [ ] Ready for merge
 
 /cc @$PublicRepoOwner
 "@
             
-            $prTitle = "Release v$Version"
-            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $featureBranch
+            $prTitle = "Sync v$Version"
+            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $syncBranch
             Write-StepSuccess "Pull Request created successfully"
-            Write-Information "✓ Release branch: $featureBranch"
+            Write-Information "✓ Sync branch: $syncBranch"
             Write-Information "✓ Target for merge: $TargetBranch"
-            Write-Information "✓ PR must be reviewed and merged to complete release"
+            Write-Information "✓ PR must be reviewed and merged to complete sync"
         }
         catch {
             Write-StepError "Failed to create PR: $_"
-            Write-Information "You can manually create a PR from branch: $featureBranch"
+            Write-Information "You can manually create a PR from branch: $syncBranch"
         }
         finally {
             Pop-Location
         }
     } else {
         Write-Information "Skipping PR creation (GitHub CLI not available)"
-        Write-Information "Manual PR creation required from branch: $featureBranch"
+        Write-Information "Manual PR creation required from branch: $syncBranch"
     }
     
-    # Step 8: Update README with Latest Release
-    Write-StepHeader "Step 8: Updating README with Latest Release"
-    
-    try {
-        Update-ReadmeLatestRelease -Version $Version
-        
-        # Add the README update to the git commit if we're in the public repo directory
-        if (Test-Path $publicRepoDir) {
-            Push-Location $publicRepoDir
-            try {
-                Invoke-GitCommand "add README.md" -WorkingDirectory $publicRepoDir
-                Write-StepSuccess "Added README.md update to the release commit"
-            }
-            catch {
-                Write-StepWarning "Could not add README.md to git: $_"
-            }
-            finally {
-                Pop-Location
-            }
-        }
-    }
-    catch {
-        Write-StepError "Failed to update README.md: $_"
-    }
-    
-    # Step 9: Create Git Tag
-    Write-StepHeader "Step 9: Creating Git Tag"
-    
-    try {
-        # Update tag in the public repository (handles existing tags)
-        $tagMessage = "Release version $Version"
-        Update-GitTag -Version $Version -WorkingDirectory $publicRepoDir -TagMessage $tagMessage
-        
-        # Also tag in the source repository
-        try {
-            $sourceTagExists = (git tag -l "v$Version") -ne ""
-            if ($sourceTagExists) {
-                git tag -d "v$Version" | Out-Null
-                Write-StepSuccess "Removed existing source tag: v$Version"
-            }
-            Invoke-GitCommand "tag -a v$Version -m `"$tagMessage`"" -WorkingDirectory $ProjectRoot
-            Write-StepSuccess "Created tag in source repository: v$Version"
-        }
-        catch {
-            Write-StepWarning "Could not tag source repository: $_"
-        }
-    }
-    catch {
-        Write-StepError "Failed to create tag: $_"
-    }
-    
-    # Step 10: Cleanup
-    Write-StepHeader "Step 10: Cleanup"
+    # Step 8: Cleanup
+    Write-StepHeader "Step 8: Cleanup"
     
     if (Test-Path $TempDir) {
         Remove-Item $TempDir -Recurse -Force
@@ -714,23 +542,22 @@ $releaseNotes
     }
     
     # Success summary
-    Write-StepHeader "Release Process Completed Successfully!"
+    Write-StepHeader "Sync Process Completed Successfully!"
     Write-Information "Version: $Version"
-    Write-Information "Feature Branch: $featureBranch"
-    Write-Information "Tag: v$Version"
+    Write-Information "Sync Branch: $syncBranch"
     Write-Information "Public Repository: $PublicRepoUrl"
     
     if (-not $skipPR) {
         Write-Information "Pull Request: Created automatically and ready for review"
-        Write-Information "⚠️  NEXT STEPS: Review and merge the PR to complete the release"
+        Write-Information "⚠️  NEXT STEPS: Review and merge the PR to sync changes to public repository"
     } else {
         Write-Information "Pull Request: Manual creation required"
-        Write-Information "⚠️  NEXT STEPS: Create PR manually and merge to complete the release"
+        Write-Information "⚠️  NEXT STEPS: Create PR manually from branch: $syncBranch"
     }
     
 }
 catch {
-    Write-StepError "Release process failed: $_"
+    Write-StepError "Sync process failed: $_"
     
     # Cleanup on error
     if (Test-Path $TempDir) {

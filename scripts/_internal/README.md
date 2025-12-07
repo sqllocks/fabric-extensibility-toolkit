@@ -4,28 +4,30 @@ This directory contains internal scripts and tools used by the Microsoft team fo
 
 ## Scripts
 
-### CreateRelease.ps1
+### SyncToPublic.ps1
 
-Automates the release process for publishing changes from the staging repository to the public repository.
+Automates syncing changes from the staging repository to the public repository by creating a Pull Request.
 
 #### Purpose
 - Validates version numbers and release notes
 - Syncs changes from staging to public repository
-- Creates Pull Requests for releases
-- Updates main README.md with latest release link
-- Tags versions for tracking
+- Creates Pull Requests for review
+- Does NOT create tags or update README (done separately in public repo)
 
 #### Usage
 
 ```powershell
-# Basic release with version check
-.\CreateRelease.ps1 -Version "2025.11.1"
+# Basic sync with version check
+.\SyncToPublic.ps1 -Version "2025.11.1"
 
-# Release with custom repository
-.\CreateRelease.ps1 -Version "2025.11.1" -PublicRepoUrl "https://github.com/microsoft/fabric-extensibility-toolkit.git"
+# Dry run to see what would be done
+.\SyncToPublic.ps1 -Version "2025.11.1" -DryRun
 
-# Force release without confirmations
-.\CreateRelease.ps1 -Version "2025.11.1" -Force
+# Sync with custom repository
+.\SyncToPublic.ps1 -Version "2025.11.1" -PublicRepoUrl "https://github.com/microsoft/fabric-extensibility-toolkit.git"
+
+# Force sync without confirmations
+.\SyncToPublic.ps1 -Version "2025.11.1" -Force
 ```
 
 #### Parameters
@@ -33,12 +35,13 @@ Automates the release process for publishing changes from the staging repository
 | Parameter | Description | Default | Required |
 |-----------|-------------|---------|----------|
 | `-Version` | Version number (YYYY.MM or YYYY.MM.P format) | - | ✅ |
-| `-PublicRepoUrl` | URL of public repository | Auto-detected | ❌ |
+| `-PublicRepoUrl` | URL of public repository | `https://github.com/microsoft/fabric-extensibility-toolkit.git` | ❌ |
 | `-PublicRepoOwner` | GitHub repository owner | `microsoft` | ❌ |
 | `-PublicRepoName` | GitHub repository name | `fabric-extensibility-toolkit` | ❌ |
 | `-SourceBranch` | Source branch to sync from | `main` | ❌ |
 | `-TargetBranch` | Target branch in public repo | `main` | ❌ |
 | `-Force` | Skip confirmation prompts | `false` | ❌ |
+| `-DryRun` | Show what would be done without making changes | `false` | ❌ |
 
 #### Prerequisites
 
@@ -57,8 +60,8 @@ Automates the release process for publishing changes from the staging repository
 
 2. **Preparation**
    - Creates temporary working directory
-   - Clones public repository (default: `https://github.com/microsoft/fabric-extensibility-toolkit.git`)
-   - Creates or checks out feature branch (`dev/release/v{VERSION}`)
+   - Clones public repository
+   - Creates or checks out sync branch (`dev/sync/{VERSION}`)
 
 3. **Synchronization**
    - Copies files from staging repository
@@ -66,15 +69,15 @@ Automates the release process for publishing changes from the staging repository
    - Preserves git history in target
 
 4. **Publication**
-   - Commits changes with release message
-   - Pushes feature branch to public repository
-   - Creates Pull Request targeting main branch (direct commits to main not allowed)
-   - Updates main README.md with latest release link
-   - Creates and pushes version tag
+   - Commits changes with sync message
+   - Pushes sync branch to public repository
+   - Creates Pull Request targeting main branch
 
 5. **Cleanup**
    - Removes temporary directories
    - Reports completion status
+
+> **Note**: Tags and README updates are handled separately in the public repository after PR is merged.
 
 #### Exclusion Patterns
 
@@ -150,21 +153,19 @@ Step-by-step upgrade instructions.
 
 #### Branch Handling
 
-The script uses `dev/release/{VERSION}` branch naming convention and follows a PR-only workflow for the target repository:
+The script uses `dev/sync/{VERSION}` branch naming convention and follows a PR-only workflow for the target repository:
 
-**Target Branch Setup**: Always ensures the release branch is created from the latest target branch (usually `main`)
+**Target Branch Setup**: Always ensures the sync branch is created from the latest target branch (usually `main`)
 
-**New Branch**: Creates `dev/release/{VERSION}` from the target branch with latest changes
+**New Branch**: Creates `dev/sync/{VERSION}` from the target branch with latest changes
 
 **Existing Local Branch**: Switches to it and merges latest changes from target branch
 
 **Existing Remote Branch**: Checks out locally and merges latest changes from target branch
 
-**PR-Only Workflow**: Creates Pull Request targeting main branch (direct commits to main are not allowed)
+**PR-Only Workflow**: Creates Pull Request targeting main branch for review and merge
 
 **Safe Updates**: Uses `--force-with-lease` when pushing to protect against overwrites
-
-**Tag Management**: Creates version tags after successful branch creation (tags are created in both repositories)
 
 #### Error Handling
 
@@ -190,19 +191,26 @@ Common issues and solutions:
 ```
 scripts/_internal/
 ├── README.md               # This file
-├── CreateRelease.ps1       # Main release script
+├── SyncToPublic.ps1        # Sync changes to public repo script
 └── [future scripts]        # Additional internal tools
 ```
 
 ## Best Practices
 
-### Before Running Release Script
+### Before Running Sync Script
 
 1. **Verify Changes**: Ensure all desired changes are committed
 2. **Test Locally**: Run full build and test suite  
 3. **Update Documentation**: Update relevant docs and README files
 4. **Create Release Notes**: Write comprehensive release notes
 5. **Check Dependencies**: Verify no internal dependencies leak
+
+### After PR is Merged in Public Repo
+
+1. **Create Git Tags**: Tag the release in public repository
+2. **Update README**: Update main README.md with latest release link
+3. **Create GitHub Release**: Generate release notes and artifacts
+4. **Announce**: Communicate release to stakeholders
 
 ### Version Management
 
