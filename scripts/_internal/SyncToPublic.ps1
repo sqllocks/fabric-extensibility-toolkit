@@ -6,9 +6,9 @@
     This script automates syncing changes to the public Microsoft Fabric Extensibility Toolkit repository:
     1. Validates the version number format
     2. Checks for corresponding release notes
-    3. Checks out source branch in public repository
-    4. Syncs changes to public repository (with exclusions)
-    5. Creates a Pull Request from source branch to target branch
+    3. Creates or updates dev/release/{VERSION} branch in public repository
+    4. Syncs changes from staging source branch to release branch (with exclusions)
+    5. Creates a Pull Request from dev/release/{VERSION} to target branch
 
 .PARAMETER Version
     The version number in format YYYY.MM.P (e.g., 2025.11.1)
@@ -23,7 +23,7 @@
     The name of the public repository (default: fabric-extensibility-toolkit)
 
 .PARAMETER SourceBranch
-    The source branch to sync from staging to public repository (default: main)
+    The source branch in staging repository to sync from (default: main)
 
 .PARAMETER TargetBranch
     The target branch for the Pull Request in public repository (default: main)
@@ -36,15 +36,15 @@
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11"
-    Syncs main branch and creates PR from main to main in public repo
+    Syncs from staging/main to public/dev/release/2025.11 and creates PR to main
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11" -DryRun
     Shows what would be done without making changes
 
 .EXAMPLE
-    .\SyncToPublic.ps1 -Version "2025.11" -SourceBranch "dev" -TargetBranch "main"
-    Syncs dev branch and creates PR from dev to main in public repo
+    .\SyncToPublic.ps1 -Version "2025.11.1" -SourceBranch "dev" -TargetBranch "main"
+    Syncs from staging/dev to public/dev/release/2025.11.1 and creates PR to main
 
 #>
 
@@ -303,17 +303,19 @@ try {
     
     # Handle DryRun mode
     if ($DryRun) {
+        $releaseBranch = "dev/release/$Version"
         Write-StepHeader "DRY RUN MODE - Showing what would be done:"
         Write-Information "✓ Version: $Version"
         Write-Information "✓ Release notes: $releaseNotesPath"
         Write-Information "✓ Public repo URL: $PublicRepoUrl"
         Write-Information "✓ Source branch (staging): $SourceBranch"
+        Write-Information "✓ Release branch (public): $releaseBranch"
         Write-Information "✓ Target branch (public): $TargetBranch"
         Write-Information "✓ Would sync files from: $ProjectRoot"
         Write-Information "✓ Would exclude patterns: $($ExcludePatterns -join ', ')"
         
         if (-not $skipPR) {
-            Write-Information "✓ Would create Pull Request from $SourceBranch to $TargetBranch"
+            Write-Information "✓ Would create Pull Request from $releaseBranch to $TargetBranch"
         } else {
             Write-Information "⚠ Would skip PR creation (GitHub CLI not available)"
         }
@@ -346,15 +348,17 @@ try {
     Invoke-GitCommand "clone $PublicRepoUrl `"$publicRepoDir`"" -WorkingDirectory $TempDir
     Write-StepSuccess "Cloned public repository"
     
-    # Checkout or create source branch in public repo
-    Write-StepHeader "Step 3.1: Preparing Source Branch"
+    # Checkout or create dev/release branch in public repo
+    Write-StepHeader "Step 3.1: Preparing Release Branch"
+    $releaseBranch = "dev/release/$Version"
+    
     try {
         Push-Location $publicRepoDir
         
-        # Check if source branch exists on remote
+        # Check if release branch exists on remote
         $remoteBranchExists = $false
         try {
-            git ls-remote --heads origin $SourceBranch | Out-Null
+            git ls-remote --heads origin $releaseBranch | Out-Null
             $remoteBranchExists = $LASTEXITCODE -eq 0
         }
         catch {
@@ -363,14 +367,14 @@ try {
         
         if ($remoteBranchExists) {
             # Checkout existing remote branch
-            Invoke-GitCommand "checkout $SourceBranch" -WorkingDirectory $publicRepoDir
-            Invoke-GitCommand "pull origin $SourceBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Checked out existing branch: $SourceBranch"
+            Invoke-GitCommand "checkout $releaseBranch" -WorkingDirectory $publicRepoDir
+            Invoke-GitCommand "pull origin $releaseBranch" -WorkingDirectory $publicRepoDir
+            Write-StepSuccess "Checked out existing release branch: $releaseBranch"
         }
         else {
             # Create new branch from target branch
-            Invoke-GitCommand "checkout -b $SourceBranch origin/$TargetBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Created new branch: $SourceBranch from $TargetBranch"
+            Invoke-GitCommand "checkout -b $releaseBranch origin/$TargetBranch" -WorkingDirectory $publicRepoDir
+            Write-StepSuccess "Created new release branch: $releaseBranch from $TargetBranch"
         }
     }
     finally {
@@ -398,22 +402,22 @@ try {
     Invoke-GitCommand "commit -m `"$commitMessage`"" -WorkingDirectory $publicRepoDir
     Write-StepSuccess "Committed changes"
     
-    # Step 6: Push branch
-    Write-StepHeader "Step 6: Pushing Source Branch"
+    # Step 6: Push release branch
+    Write-StepHeader "Step 6: Pushing Release Branch"
     
     try {
         # Use --force-with-lease to safely update existing branches
-        Invoke-GitCommand "push origin $SourceBranch --force-with-lease" -WorkingDirectory $publicRepoDir
-        Write-StepSuccess "Pushed source branch to remote"
+        Invoke-GitCommand "push origin $releaseBranch --force-with-lease" -WorkingDirectory $publicRepoDir
+        Write-StepSuccess "Pushed release branch to remote"
     }
     catch {
         try {
             # Fallback to regular push for new branches
-            Invoke-GitCommand "push origin $SourceBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Pushed new source branch to remote"
+            Invoke-GitCommand "push origin $releaseBranch" -WorkingDirectory $publicRepoDir
+            Write-StepSuccess "Pushed new release branch to remote"
         }
         catch {
-            Write-StepError "Failed to push source branch: $_"
+            Write-StepError "Failed to push release branch: $_"
             throw
         }
     }
@@ -453,22 +457,22 @@ $releaseNotes
 "@
             
             $prTitle = "Sync v$Version"
-            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $SourceBranch
+            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $releaseBranch
             Write-StepSuccess "Pull Request created successfully"
-            Write-Information "✓ Source branch: $SourceBranch"
+            Write-Information "✓ Release branch: $releaseBranch"
             Write-Information "✓ Target branch: $TargetBranch"
             Write-Information "✓ PR must be reviewed and merged to complete sync"
         }
         catch {
             Write-StepError "Failed to create PR: $_"
-            Write-Information "You can manually create a PR from branch: $SourceBranch to $TargetBranch"
+            Write-Information "You can manually create a PR from branch: $releaseBranch to $TargetBranch"
         }
         finally {
             Pop-Location
         }
     } else {
         Write-Information "Skipping PR creation (GitHub CLI not available)"
-        Write-Information "Manual PR creation required from branch: $SourceBranch to $TargetBranch"
+        Write-Information "Manual PR creation required from branch: $releaseBranch to $TargetBranch"
     }
     
     # Step 8: Cleanup
@@ -482,16 +486,17 @@ $releaseNotes
     # Success summary
     Write-StepHeader "Sync Process Completed Successfully!"
     Write-Information "Version: $Version"
-    Write-Information "Source Branch: $SourceBranch"
-    Write-Information "Target Branch: $TargetBranch"
+    Write-Information "Source Branch (staging): $SourceBranch"
+    Write-Information "Release Branch (public): $releaseBranch"
+    Write-Information "Target Branch (public): $TargetBranch"
     Write-Information "Public Repository: $PublicRepoUrl"
     
     if (-not $skipPR) {
         Write-Information "Pull Request: Created automatically and ready for review"
-        Write-Information "⚠️  NEXT STEPS: Review and merge the PR from $SourceBranch to $TargetBranch"
+        Write-Information "⚠️  NEXT STEPS: Review and merge the PR from $releaseBranch to $TargetBranch"
     } else {
         Write-Information "Pull Request: Manual creation required"
-        Write-Information "⚠️  NEXT STEPS: Create PR manually from branch: $SourceBranch to $TargetBranch"
+        Write-Information "⚠️  NEXT STEPS: Create PR manually from branch: $releaseBranch to $TargetBranch"
     }
     
 }

@@ -10,7 +10,8 @@ Automates syncing changes from the staging repository to the public repository b
 
 #### Purpose
 - Validates version numbers and release notes
-- Syncs changes from staging to public repository
+- Creates versioned release branch (dev/release/{VERSION}) in public repository
+- Syncs changes from staging to public release branch
 - Creates Pull Requests for review
 - Does NOT create tags or update README (done separately in public repo)
 
@@ -38,8 +39,8 @@ Automates syncing changes from the staging repository to the public repository b
 | `-PublicRepoUrl` | URL of public repository | `https://github.com/microsoft/fabric-extensibility-toolkit.git` | ❌ |
 | `-PublicRepoOwner` | GitHub repository owner | `microsoft` | ❌ |
 | `-PublicRepoName` | GitHub repository name | `fabric-extensibility-toolkit` | ❌ |
-| `-SourceBranch` | Branch to sync from staging and push to public repo | `main` | ❌ |
-| `-TargetBranch` | Target branch for PR in public repo | `main` | ❌ |
+| `-SourceBranch` | Branch in staging repository to sync from | `main` | ❌ |
+| `-TargetBranch` | Target branch for PR in public repo (where release branch merges to) | `main` | ❌ |
 | `-Force` | Skip confirmation prompts | `false` | ❌ |
 | `-DryRun` | Show what would be done without making changes | `false` | ❌ |
 
@@ -61,22 +62,22 @@ Automates syncing changes from the staging repository to the public repository b
 2. **Preparation**
    - Creates temporary working directory
    - Clones public repository
-   - Checks out source branch in public repository
+   - Creates or checks out dev/release/{VERSION} branch in public repository
 
 3. **Synchronization**
-   - Copies files from staging repository
+   - Copies files from staging repository (SourceBranch)
    - Applies exclusion patterns (see below)
-   - Commits changes to source branch
+   - Commits changes to release branch
 
 4. **Publication**
-   - Pushes source branch to public repository
-   - Creates Pull Request from source branch to target branch
+   - Pushes dev/release/{VERSION} branch to public repository
+   - Creates Pull Request from dev/release/{VERSION} to target branch
 
 5. **Cleanup**
    - Removes temporary directories
    - Reports completion status
 
-> **Note**: The script syncs directly from staging repository's source branch to the public repository's source branch, then creates a PR to the target branch. No intermediate branches are created.
+> **Note**: The script creates a versioned release branch (dev/release/{VERSION}) in the public repository, allowing for review and testing before merging to the target branch.
 
 #### Exclusion Patterns
 
@@ -152,23 +153,31 @@ Step-by-step upgrade instructions.
 
 #### Branch Handling
 
-The script performs direct branch-to-branch syncing:
+The script creates a versioned release branch for safe, reviewable releases:
 
-**Source Branch**: The branch in the staging repository to sync from (default: `main`)
+**Source Branch** (staging): The branch in staging repository to sync from (default: `main`)
 
-**Target Branch**: The branch in the public repository to create the PR against (default: `main`)
+**Release Branch** (public): Automatically created as `dev/release/{VERSION}` in public repository
+
+**Target Branch** (public): The branch in public repository to create the PR against (default: `main`)
 
 **Workflow**:
 1. Clones public repository
-2. Checks out source branch (creates if it doesn't exist from target branch)
+2. Creates/updates `dev/release/{VERSION}` branch (from target branch if new)
 3. Syncs files from staging repository's source branch
-4. Commits and pushes to source branch in public repository
-5. Creates Pull Request from source branch → target branch
+4. Commits and pushes to `dev/release/{VERSION}` in public repository
+5. Creates Pull Request from `dev/release/{VERSION}` → target branch
 
 **Example Workflows**:
-- `main` → `main`: Standard release sync (default)
-- `dev` → `main`: Sync development branch for review before merging to main
-- `hotfix` → `main`: Emergency fixes that need quick review
+- Staging `main` → Public `dev/release/2025.11` → PR to `main`: Standard monthly release (default)
+- Staging `dev` → Public `dev/release/2025.11.1` → PR to `main`: Patch release from development branch
+- Staging `hotfix` → Public `dev/release/2025.11.2` → PR to `main`: Emergency hotfix release
+
+**Benefits**:
+- **Safety**: Release branch can be reviewed and tested before merging to main
+- **Versioning**: Clear version tracking with dedicated branches
+- **Flexibility**: Multiple commits can be added to same release branch if needed
+- **Rollback**: Release branch can be deleted without affecting main if issues are found
 
 **Safe Updates**: Uses `--force-with-lease` when pushing to protect against overwrites
 
