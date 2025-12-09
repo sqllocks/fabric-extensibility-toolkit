@@ -1148,7 +1148,7 @@ import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
 
 ### Step 6: Create Manifest Configuration
 
-#### 6.1: Create XML Manifest Template (`Workload/Manifest/items/[ItemName]/[ItemName]Item.xml`)
+#### 6.1: Create XML Manifest Template (`Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml`)
 
 **Use the HelloWorld pattern exactly**:
 
@@ -1163,13 +1163,13 @@ import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
 
 **Key Elements**:
 
-- **Location**: Place in `Workload/Manifest/items/[ItemName]/[ItemName]Item.xml`
+- **Location**: Place in `Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml`
 - **Template Processing**: Use `{{WORKLOAD_NAME}}` placeholder for environment-specific generation
 - **Naming Convention**: Follow `[ItemName]Item.xml` pattern
 - **Category**: Fabric category (Data, Analytics, etc.)
 - **Environment Generation**: Manifest generation will replace placeholders with values from .env files
 
-#### 6.2: Create JSON Manifest (`Workload/Manifest/items/[ItemName]/[ItemName]Item.json`)
+#### 6.2: Create JSON Manifest (`Workload/Manifest/items/[ItemName]Item/[ItemName]Item.json`)
 
 **Use the HelloWorld pattern as template**:
 
@@ -1499,10 +1499,10 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
 ### 1. Copy HelloWorld Item Structure
 ```bash
 # Copy the entire HelloWorld item implementation
-cp -r Workload/app/items/HelloWorldItem Workload/app/items/[ItemName]Item
+cp -r Workload/app/items/[ItemName]Item
 
 # Copy the manifest files
-cp -r Workload/Manifest/items/HelloWorld Workload/Manifest/items/[ItemName]
+cp -r Workload/Manifest/items/[ItemName]Item
 ```
 
 ### 2. Find and Replace Pattern
@@ -1545,7 +1545,7 @@ When creating a new item, ensure all these components are created:
 - [ ] `[ItemName]ItemDefaultView.tsx` - Default/main content view
 - [ ] `[ItemName]ItemRibbon.tsx` - Ribbon/toolbar component
 
-**Manifest Files** (in `Workload/Manifest/items/[ItemName]/`):
+**Manifest Files** (in `Workload/Manifest/items/[ItemName]Item/`):
 - [ ] `[ItemName]Item.xml` - XML manifest template with placeholders like `{{WORKLOAD_NAME}}`
 - [ ] `[ItemName]Item.json` - JSON manifest with editor path and metadata
 
@@ -1600,8 +1600,8 @@ ls Workload/app/items/[ItemName]Item/[ItemName]ItemEmptyView.tsx
 ls Workload/app/items/[ItemName]Item/[ItemName]ItemDefaultView.tsx
 ls Workload/app/items/[ItemName]Item/[ItemName]ItemRibbon.tsx
 ls Workload/app/items/[ItemName]Item/[ItemName]Item.scss
-ls Workload/Manifest/items/[ItemName]/[ItemName]Item.json
-ls Workload/Manifest/items/[ItemName]/[ItemName]Item.xml
+ls Workload/Manifest/items/[ItemName]Item/[ItemName]Item.json
+ls Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml
 ls Workload/Manifest/assets/images/[ItemName]Item-icon.png
 ```
 

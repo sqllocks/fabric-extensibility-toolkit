@@ -18,7 +18,7 @@ Workload/
     ├── *.xsd                 # Schema definition files
     ├── assets/               # Workload assets (icons, images)
     └── items/                # Per-item configuration folder
-        └── [ItemName]/       # Individual configuration folder for every item (e.g., HelloWorld/)
+        └── [ItemName]Item/   # Individual configuration folder for every item (e.g., HelloWorld/)
             ├── [ItemName]Item.json    # Fabric JSON for Fabric Frontend configuration (e.g., HelloWorldItem.json)
             └── [ItemName]Item.xml     # Fabric XML for Fabric Type configuration (e.g., HelloWorldItem.xml)
 
@@ -133,7 +133,7 @@ Each Fabric item has its own folder containing:
 ### Item Structure Example
 
 ```text
-Workload/Manifest/items/HelloWorld/
+Workload/Manifest/items/HelloWorldItem/
 ├── HelloWorldItem.json          # Fabric JSON configuration
 └── HelloWorldItem.xml           # Fabric XML template with placeholders (e.g., {{WORKLOAD_NAME}})
 ```
@@ -175,7 +175,7 @@ All files in the `build/` directory are generated on-demand from templates and s
 
 - **Environment settings**: Edit .env files directly and commit
 - **New environments**: Copy existing .env file, modify, and commit
-- **Item configurations**: Add/modify files in Workload/Manifest/items/[ItemName]/ and commit
+- **Item configurations**: Add/modify files in Workload/Manifest/items/[ItemName]Item/ and commit
 - **Developer workspace**: Run SetupDevEnvironment.ps1 again
 - **Build artifacts**: Run build scripts to regenerate all files in build/ directory
 
