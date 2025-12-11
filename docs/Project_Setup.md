@@ -16,7 +16,14 @@ Getting started involves 5 Steps that are all outlined in this document below.
 To make it easy as possible we have created a [Setup.ps1](../scripts/Setup/Setup.ps1) script that will automate all the work for you.  The setup script can be started without any parameters. All necessary information will be asked in the commandline. If you want to automate the process you can also parse the values as parameters to the script. An example to parse the WorkloadName (unique identifier of the workload in Fabric) is shown below.
 
 ```powershell
+# Navigate to the setup scripts directory
+cd scripts\Setup
+
+# Run the setup script
 .\Setup.ps1 -WorkloadName "Org.MyWorkload"
+
+# Return to repository root
+cd ../..
 ```
 
 * Make sure you have Powershell 7 installed and configured in the environment you run the script.
@@ -28,7 +35,14 @@ To make it easy as possible we have created a [Setup.ps1](../scripts/Setup/Setup
 For Mac and Linux use pwsh to start the powershell Scripts:
 
 ```bash
+# Navigate to setup scripts directory
+cd scripts/Setup
+
+# Run the setup script
 pwsh ./Setup.ps1 -WorkloadName "Org.MyWorkload" 
+
+# Return to repository root
+cd ../..
 ```
 
 After the script finished successfully your environment is configured and ready to go. The Script will provide you with additional information on the next steps to see your Workload light up in Fabric.
@@ -40,10 +54,11 @@ The Setup script can be run several times. If values are already present you wil
 After you have completed all of the above steps, you are ready to test the workload.
 Start the workload in development mode:
 
-1. Run [StartDevServer.ps1](./scripts/Run/StartDevServer.ps1) to start the local Development environment which includes the Frontend and APIs
-2. Run [StartDevGateway.ps1](./scripts/Run/StartDevGateway.ps1) to register your local development instance with Fabric Backend
-3. Navigate to the Fabric portal. Head to the Admin Portal settings and enable the following tenant settings
-4. Navigate to the Fabric Developer Settings and enable the Fabric Developer Mode
+1. Navigate to the [Run](../scripts/Run) scripts directory 
+2. Run [StartDevServer.ps1](../scripts/Run/StartDevServer.ps1) to start the local Development environment which includes the Frontend and APIs
+3. Run [StartDevGateway.ps1](../scripts/Run/StartDevGateway.ps1) to register your local development instance with Fabric Backend
+4. Navigate to the Fabric portal. Head to the Admin Portal settings and enable the following tenant settings
+5. Navigate to the Fabric Developer Settings and enable the Fabric Developer Mode
 
 You are ready to create your first Hello World Item in Fabric.
 
@@ -60,6 +75,6 @@ Congratulations! You have created your first item from your development environm
 
 ## Start coding
 
-Now that you are all set you can start following your own item ideas. For this you can either change the [HelloWorldItemEditor.tsx](./Workload/app/items/HelloWorldItem/HelloWorldItemEditor.tsx) or you can use the [CreateNewItem.ps1](./scripts/Setup/CreateNewItem.ps1) to create a new item.
+Now that you are all set you can start following your own item ideas. For this you can either change the [HelloWorldItemEditor.tsx](../Workload/app/items/HelloWorldItem/HelloWorldItemEditor.tsx) or you can use the [CreateNewItem.ps1](../scripts/Setup/CreateNewItem.ps1) to create a new item.
 
 Happy coding! 🚀
