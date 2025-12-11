@@ -21,9 +21,6 @@ cd scripts\Setup
 
 # Run the setup script
 .\Setup.ps1 -WorkloadName "Org.MyWorkload"
-
-# Return to repository root
-cd ../..
 ```
 
 * Make sure you have Powershell 7 installed and configured in the environment you run the script.
@@ -40,9 +37,6 @@ cd scripts/Setup
 
 # Run the setup script
 pwsh ./Setup.ps1 -WorkloadName "Org.MyWorkload" 
-
-# Return to repository root
-cd ../..
 ```
 
 After the script finished successfully your environment is configured and ready to go. The Script will provide you with additional information on the next steps to see your Workload light up in Fabric.
