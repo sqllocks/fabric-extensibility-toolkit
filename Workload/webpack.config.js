@@ -28,8 +28,23 @@ module.exports = {
             "process.env.WORKLOAD_NAME": JSON.stringify(process.env.WORKLOAD_NAME),
             "process.env.ITEM_NAMES": JSON.stringify(process.env.ITEM_NAMES),
             "process.env.WORKLOAD_VERSION": JSON.stringify(process.env.WORKLOAD_VERSION),
-            "process.env.LOG_LEVEL": JSON.stringify(process.env.LOG_LEVEL)
+            "process.env.LOG_LEVEL": JSON.stringify(process.env.LOG_LEVEL),
+            "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || 'production'),
+            "process.env.ENABLE_PLAYGROUND": JSON.stringify(process.env.ENABLE_PLAYGROUND || 'false'),
+
+            "process.env": JSON.stringify({
+            WORKLOAD_NAME: process.env.WORKLOAD_NAME,
+            ITEM_NAMES: process.env.ITEM_NAMES,
+            WORKLOAD_VERSION: process.env.WORKLOAD_VERSION,
+            LOG_LEVEL: process.env.LOG_LEVEL,
+            NODE_ENV: process.env.NODE_ENV || 'production',
+            ENABLE_PLAYGROUND: process.env.ENABLE_PLAYGROUND || 'false'
+            })
         }),
+        // Add process polyfill
+    new Webpack.ProvidePlugin({
+        process: 'process/browser',
+    }),
         new HtmlWebpackPlugin({
             template: "./app/index.html",
         }),
