@@ -393,18 +393,22 @@ try {
         
         # Check if release branch exists on remote
         $remoteBranchExists = $false
-        try {
-            git ls-remote --heads origin $releaseBranch | Out-Null
-            $remoteBranchExists = $LASTEXITCODE -eq 0
-        }
-        catch {
-            $remoteBranchExists = $false
+        $remoteBranchCheck = git ls-remote --heads origin $releaseBranch 2>&1
+        if ($LASTEXITCODE -eq 0 -and $remoteBranchCheck) {
+            $remoteBranchExists = $true
         }
         
         if ($remoteBranchExists) {
             # Checkout existing remote branch
-            Invoke-GitCommand "checkout $releaseBranch" -WorkingDirectory $publicRepoDir
-            Invoke-GitCommand "pull origin $releaseBranch" -WorkingDirectory $publicRepoDir
+            Write-Information "Checking out existing branch: $releaseBranch"
+            git checkout $releaseBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to checkout branch $releaseBranch"
+            }
+            git pull origin $releaseBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to pull branch $releaseBranch"
+            }
             Write-StepSuccess "Checked out existing release branch: $releaseBranch"
         }
         else {
@@ -413,7 +417,11 @@ try {
                 throw "Patch versions require an existing release branch. Please create main version $mainVersion first."
             }
             # Create new branch from target branch (only for main versions)
-            Invoke-GitCommand "checkout -b $releaseBranch origin/$TargetBranch" -WorkingDirectory $publicRepoDir
+            Write-Information "Creating new branch: $releaseBranch from origin/$TargetBranch"
+            git checkout -b $releaseBranch origin/$TargetBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create branch $releaseBranch from origin/$TargetBranch"
+            }
             Write-StepSuccess "Created new release branch: $releaseBranch from $TargetBranch"
         }
     }
@@ -445,21 +453,28 @@ try {
     # Step 6: Push release branch
     Write-StepHeader "Step 6: Pushing Release Branch"
     
+    Push-Location $publicRepoDir
     try {
-        # Use --force-with-lease to safely update existing branches
-        Invoke-GitCommand "push origin $releaseBranch --force-with-lease" -WorkingDirectory $publicRepoDir
-        Write-StepSuccess "Pushed release branch to remote"
+        # Try regular push first for new branches
+        Write-Information "Pushing $releaseBranch to remote..."
+        $pushOutput = git push origin $releaseBranch 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-StepSuccess "Pushed release branch to remote"
+        } else {
+            # Try force-with-lease for existing branches
+            Write-Information "Regular push failed, trying force-with-lease..."
+            $pushOutput = git push origin $releaseBranch --force-with-lease 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-StepSuccess "Pushed release branch to remote with force-with-lease"
+            } else {
+                Write-StepError "Failed to push release branch"
+                Write-Error "Git output: $pushOutput"
+                throw "Failed to push $releaseBranch to remote repository"
+            }
+        }
     }
-    catch {
-        try {
-            # Fallback to regular push for new branches
-            Invoke-GitCommand "push origin $releaseBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Pushed new release branch to remote"
-        }
-        catch {
-            Write-StepError "Failed to push release branch: $_"
-            throw
-        }
+    finally {
+        Pop-Location
     }
     
     # Step 7: Create Pull Request
@@ -496,16 +511,24 @@ $releaseNotes
 /cc @$PublicRepoOwner
 "@
             
-            $prTitle = "Sync v$Version"
-            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $releaseBranch
-            Write-StepSuccess "Pull Request created successfully"
-            Write-Information "✓ Release branch: $releaseBranch"
-            Write-Information "✓ Target branch: $TargetBranch"
-            Write-Information "✓ PR must be reviewed and merged to complete sync"
+            # Open PR creation in browser (bypasses EMU restrictions)
+            Write-Information "Opening PR creation in browser..."
+            gh pr create --repo $PublicRepoOwner/$PublicRepoName --base $TargetBranch --head $releaseBranch --web
+            if ($LASTEXITCODE -eq 0) {
+                Write-StepSuccess "Opened PR creation page in browser"
+                Write-Information "✓ Release branch: $releaseBranch"
+                Write-Information "✓ Target branch: $TargetBranch"
+                Write-Information "✓ Complete the PR creation in your browser"
+            } else {
+                Write-StepWarning "Failed to open browser"
+                Write-Information "You can manually create a PR at:"
+                Write-Information "https://github.com/$PublicRepoOwner/$PublicRepoName/compare/$TargetBranch...$releaseBranch"
+            }
         }
         catch {
-            Write-StepError "Failed to create PR: $_"
+            Write-StepWarning "Failed to create PR: $_"
             Write-Information "You can manually create a PR from branch: $releaseBranch to $TargetBranch"
+            Write-Information "Or use: gh pr create --repo $PublicRepoOwner/$PublicRepoName --base $TargetBranch --head $releaseBranch"
         }
         finally {
             Pop-Location
@@ -532,8 +555,8 @@ $releaseNotes
     Write-Information "Public Repository: $PublicRepoUrl"
     
     if (-not $skipPR) {
-        Write-Information "Pull Request: Created automatically and ready for review"
-        Write-Information "⚠️  NEXT STEPS: Review and merge the PR from $releaseBranch to $TargetBranch"
+        Write-Information "Pull Request: Check output above for status"
+        Write-Information "⚠️  NEXT STEPS: If PR was created, review and merge. Otherwise create manually from $releaseBranch to $TargetBranch"
     } else {
         Write-Information "Pull Request: Manual creation required"
         Write-Information "⚠️  NEXT STEPS: Create PR manually from branch: $releaseBranch to $TargetBranch"
