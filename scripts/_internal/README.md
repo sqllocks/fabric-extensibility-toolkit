@@ -18,7 +18,7 @@ Creates Git tags in the public repository after a release PR has been merged.
 
 #### Purpose
 - Validates version numbers and release notes
-- Creates versioned release branch (dev/release/{VERSION}) in public repository
+- Creates versioned release branch (release/{VERSION}) in public repository
 - Syncs changes from staging to public release branch
 - Creates Pull Requests for review
 - Does NOT create tags or update README (done separately in public repo)
@@ -70,7 +70,7 @@ Creates Git tags in the public repository after a release PR has been merged.
 2. **Preparation**
    - Creates temporary working directory
    - Clones public repository
-   - Creates or checks out dev/release/{VERSION} branch in public repository
+   - Creates or checks out release/{VERSION} branch in public repository
 
 3. **Synchronization**
    - Copies files from staging repository (SourceBranch)
@@ -78,14 +78,14 @@ Creates Git tags in the public repository after a release PR has been merged.
    - Commits changes to release branch
 
 4. **Publication**
-   - Pushes dev/release/{VERSION} branch to public repository
-   - Creates Pull Request from dev/release/{VERSION} to target branch
+   - Pushes release/{VERSION} branch to public repository
+   - Creates Pull Request from release/{VERSION} to target branch
 
 5. **Cleanup**
    - Removes temporary directories
    - Reports completion status
 
-> **Note**: The script creates a versioned release branch (dev/release/{VERSION}) in the public repository, allowing for review and testing before merging to the target branch.
+> **Note**: The script creates a versioned release branch (release/{VERSION}) in the public repository, allowing for review and testing before merging to the target branch.
 
 #### Exclusion Patterns
 
@@ -166,29 +166,29 @@ The script creates versioned release branches differently based on version type:
 **Source Branch** (staging): The branch in staging repository to sync from (default: `main`)
 
 **Release Branch** (public): 
-- **Main versions** (e.g., `2025.12`): Creates new `dev/release/2025.12` branch
-- **Patch versions** (e.g., `2025.12.1`): Uses existing `dev/release/2025.12` branch
+- **Main versions** (e.g., `2025.12`): Creates new `release/2025.12` branch
+- **Patch versions** (e.g., `2025.12.1`): Uses existing `release/2025.12` branch
 
 **Target Branch** (public): The branch in public repository to create the PR against (default: `main`)
 
 **Workflow**:
 1. Clones public repository
-2. **For main versions**: Creates `dev/release/{VERSION}` from target branch if it doesn't exist
-3. **For patch versions**: Checks out existing `dev/release/{MAIN_VERSION}` (errors if not found)
+2. **For main versions**: Creates `release/{VERSION}` from target branch if it doesn't exist
+3. **For patch versions**: Checks out existing `release/{MAIN_VERSION}` (errors if not found)
 4. Syncs files from staging repository's source branch
 5. Commits and pushes to release branch in public repository
 6. Creates Pull Request from release branch → target branch
 
 **Example Workflows**:
-- Staging `main` → Public `dev/release/2025.12` → PR to `main`: Monthly release (creates new branch)
-- Staging `main` → Public `dev/release/2025.12` → PR to `main`: First patch (uses existing branch)
-- Staging `hotfix` → Public `dev/release/2025.12` → PR to `main`: Second patch (uses existing branch)
+- Staging `main` → Public `release/2025.12` → PR to `main`: Monthly release (creates new branch)
+- Staging `main` → Public `release/2025.12` → PR to `main`: First patch (uses existing branch)
+- Staging `hotfix` → Public `release/2025.12` → PR to `main`: Second patch (uses existing branch)
 
 **Branch Lifecycle**:
-1. **2025.12** (main version): Creates `dev/release/2025.12` → PR → merge to main
-2. **2025.12.1** (patch): Updates `dev/release/2025.12` → PR → merge to main  
-3. **2025.12.2** (patch): Updates `dev/release/2025.12` → PR → merge to main
-4. **2026.1** (main version): Creates `dev/release/2026.1` → PR → merge to main
+1. **2025.12** (main version): Creates `release/2025.12` → PR → merge to main
+2. **2025.12.1** (patch): Updates `release/2025.12` → PR → merge to main  
+3. **2025.12.2** (patch): Updates `release/2025.12` → PR → merge to main
+4. **2026.1** (main version): Creates `release/2026.1` → PR → merge to main
 
 **Benefits**:
 - **Safety**: Release branch can be reviewed and tested before merging to main

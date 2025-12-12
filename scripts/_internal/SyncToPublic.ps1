@@ -6,9 +6,9 @@
     This script automates syncing changes to the public Microsoft Fabric Extensibility Toolkit repository:
     1. Validates the version number format
     2. Checks for corresponding release notes
-    3. Creates or updates dev/release/{VERSION} branch in public repository
+    3. Creates or updates release/{VERSION} branch in public repository
     4. Syncs changes from staging source branch to release branch (with exclusions)
-    5. Creates a Pull Request from dev/release/{VERSION} to target branch
+    5. Creates a Pull Request from release/{VERSION} to target branch
 
 .PARAMETER Version
     The version number in format YYYY.MM.P (e.g., 2025.11.1)
@@ -36,7 +36,7 @@
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11"
-    Syncs from staging/main to public/dev/release/2025.11 and creates PR to main
+    Syncs from staging/main to public/release/2025.11 and creates PR to main
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11" -DryRun
@@ -44,7 +44,7 @@
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11.1" -SourceBranch "dev" -TargetBranch "main"
-    Syncs from staging/dev to public/dev/release/2025.11.1 and creates PR to main
+    Syncs from staging/dev to public/release/2025.11.1 and creates PR to main
 
 #>
 
@@ -408,13 +408,13 @@ try {
     # Determine which branch to use based on version type
     $isPatch = Test-IsPatchVersion $Version
     if ($isPatch) {
-        # Patch versions use the main version's release branch (e.g., 2025.12.1 uses dev/release/2025.12)
+        # Patch versions use the main version's release branch (e.g., 2025.12.1 uses release/2025.12)
         $mainVersion = Get-MainVersion $Version
-        $releaseBranch = "dev/release/$mainVersion"
+        $releaseBranch = "release/$mainVersion"
         Write-Information "Patch version detected - using release branch: $releaseBranch"
     } else {
-        # Main versions create their own release branch (e.g., 2025.12 creates dev/release/2025.12)
-        $releaseBranch = "dev/release/$Version"
+        # Main versions create their own release branch (e.g., 2025.12 creates release/2025.12)
+        $releaseBranch = "release/$Version"
         Write-Information "Main version detected - using release branch: $releaseBranch"
     }
     
