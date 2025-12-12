@@ -222,34 +222,55 @@ function Copy-FilesWithExclusions {
     
     Write-Information "Copying files from $SourcePath to $DestinationPath..."
     
-    # Create robocopy exclude file
-    $excludeFile = Join-Path $env:TEMP "robocopy-exclude-$(Get-Random).txt"
-    $ExcludePatterns | Out-File -FilePath $excludeFile -Encoding UTF8
-    
     try {
-        # Use robocopy for efficient copying with exclusions
+        # Build robocopy arguments
         $robocopyArgs = @(
             $SourcePath
             $DestinationPath
             "/MIR"  # Mirror directory tree
-            "/XF"   # Exclude files
-            "/XD"   # Exclude directories
+            "/NFL"  # No file list
+            "/NDL"  # No directory list
+            "/NP"   # No progress
         )
         
-        # Add exclude patterns
+        # Separate directories and files to exclude
+        $excludeDirs = @()
+        $excludeFiles = @()
+        
         foreach ($pattern in $ExcludePatterns) {
-            if ($pattern.EndsWith("/*")) {
-                $robocopyArgs += "/XD"
-                $robocopyArgs += $pattern.Replace("/*", "")
+            # Normalize path separators to backslashes for Windows
+            $normalizedPattern = $pattern.Replace("/", "\")
+            
+            if ($normalizedPattern.EndsWith("\*")) {
+                # Directory pattern - remove the \* suffix
+                $dirPath = $normalizedPattern.Substring(0, $normalizedPattern.Length - 2)
+                $excludeDirs += $dirPath
+            } elseif ($normalizedPattern.Contains("\")) {
+                # Path with directory - exclude the directory
+                $dirPath = Split-Path $normalizedPattern -Parent
+                if ($dirPath) {
+                    $excludeDirs += $dirPath
+                }
             } else {
-                $robocopyArgs += "/XF"
-                $robocopyArgs += $pattern
+                # File pattern (e.g., *.tmp, *.log)
+                $excludeFiles += $normalizedPattern
             }
         }
         
-        $robocopyArgs += "/NFL" # No file list
-        $robocopyArgs += "/NDL" # No directory list
-        $robocopyArgs += "/NP"  # No progress
+        # Add directory exclusions
+        if ($excludeDirs.Count -gt 0) {
+            $robocopyArgs += "/XD"
+            $robocopyArgs += $excludeDirs
+        }
+        
+        # Add file exclusions
+        if ($excludeFiles.Count -gt 0) {
+            $robocopyArgs += "/XF"
+            $robocopyArgs += $excludeFiles
+        }
+        
+        Write-Information "Excluding directories: $($excludeDirs -join ', ')"
+        Write-Information "Excluding file patterns: $($excludeFiles -join ', ')"
         
         $result = & robocopy @robocopyArgs
         
@@ -258,12 +279,21 @@ function Copy-FilesWithExclusions {
             throw "Robocopy failed with exit code $LASTEXITCODE"
         }
         
+        # Remove specific excluded directories from destination that shouldn't exist in public repo
+        # Don't remove .git, .vs, .vscode as these are excluded from copying but shouldn't be removed from destination
+        $dirsToRemove = @("scripts\_internal", "Workload\node_modules", "build", "release")
+        foreach ($dir in $dirsToRemove) {
+            $fullPath = Join-Path $DestinationPath $dir
+            if (Test-Path $fullPath) {
+                Write-Information "Removing excluded directory: $dir"
+                Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
         Write-StepSuccess "Files copied successfully"
     }
-    finally {
-        if (Test-Path $excludeFile) {
-            Remove-Item $excludeFile -Force
-        }
+    catch {
+        throw "File copy failed: $_"
     }
 }
 
