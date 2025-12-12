@@ -351,10 +351,10 @@ try {
         $isPatch = Test-IsPatchVersion $Version
         if ($isPatch) {
             $mainVersion = Get-MainVersion $Version
-            $releaseBranch = "dev/release/$mainVersion"
+            $releaseBranch = "release/$mainVersion"
             $branchNote = "(patch version - uses existing release branch)"
         } else {
-            $releaseBranch = "dev/release/$Version"
+            $releaseBranch = "release/$Version"
             $branchNote = "(main version - creates new release branch)"
         }
         
@@ -402,7 +402,7 @@ try {
     Invoke-GitCommand "clone $PublicRepoUrl `"$publicRepoDir`"" -WorkingDirectory $TempDir
     Write-StepSuccess "Cloned public repository"
     
-    # Checkout or create dev/release branch in public repo
+    # Checkout or create release branch in public repo
     Write-StepHeader "Step 3.1: Preparing Release Branch"
     
     # Determine which branch to use based on version type
