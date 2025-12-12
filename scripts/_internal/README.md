@@ -8,6 +8,14 @@ This directory contains internal scripts and tools used by the Microsoft team fo
 
 Automates syncing changes from the staging repository to the public repository by creating a Pull Request.
 
+**Use this script first** to sync changes and create a PR.
+
+### TagPublicRepo.ps1
+
+Creates Git tags in the public repository after a release PR has been merged.
+
+**Use this script second** after the PR is merged to main.
+
 #### Purpose
 - Validates version numbers and release notes
 - Creates versioned release branch (dev/release/{VERSION}) in public repository
@@ -210,14 +218,144 @@ Common issues and solutions:
 - Only curated changes are synchronized
 - All commits are reviewed via Pull Request process
 
+---
+
+### TagPublicRepo.ps1
+
+Creates Git tags in the public repository after a release PR has been merged to main.
+
+#### Purpose
+- Validates that release notes exist in the main branch
+- Creates annotated Git tags (v{VERSION})
+- Pushes tags to the public repository
+- Provides GitHub Release creation link
+
+#### Usage
+
+```powershell
+# Tag a main version release
+.\TagPublicRepo.ps1 -Version "2025.12"
+
+# Tag a patch release
+.\TagPublicRepo.ps1 -Version "2025.12.1"
+
+# Dry run to see what would be done
+.\TagPublicRepo.ps1 -Version "2025.12" -DryRun
+
+# Overwrite existing tag
+.\TagPublicRepo.ps1 -Version "2025.12" -Force
+```
+
+#### Parameters
+
+| Parameter | Description | Default | Required |
+|-----------|-------------|---------|----------|
+| `-Version` | Version number (YYYY.MM or YYYY.MM.P format) | - | ✅ |
+| `-PublicRepoUrl` | URL of public repository | `https://github.com/microsoft/fabric-extensibility-toolkit.git` | ❌ |
+| `-PublicRepoOwner` | GitHub repository owner | `microsoft` | ❌ |
+| `-PublicRepoName` | GitHub repository name | `fabric-extensibility-toolkit` | ❌ |
+| `-Branch` | Branch to tag in public repository | `main` | ❌ |
+| `-Force` | Overwrite existing tag | `false` | ❌ |
+| `-DryRun` | Show what would be done without making changes | `false` | ❌ |
+
+#### Prerequisites
+
+1. **Release PR Merged**: The release PR must be merged to main before tagging
+2. **Release Notes in Main**: File must exist at `docs/ReleaseNotes/{YYYY}/v{VERSION}.md` in the main branch
+3. **GitHub CLI**: Must be authenticated (`gh auth login`)
+
+#### Process Flow
+
+1. **Validation**
+   - Checks version format (YYYY.MM or YYYY.MM.P)
+   - Verifies GitHub CLI authentication
+
+2. **Release Notes Check**
+   - Confirms release notes file exists in main branch
+   - Fails if release notes are not yet merged
+
+3. **Tag Check**
+   - Checks if tag already exists
+   - Requires `-Force` to overwrite existing tags
+
+4. **Tag Creation**
+   - Clones public repository
+   - Creates annotated tag with release notes as message
+   - Pushes tag to remote
+
+5. **Next Steps**
+   - Provides link to create GitHub Release
+
+#### Tag Format
+
+Tags are created as `v{VERSION}`:
+- Main version `2025.12` → Tag `v2025.12`
+- Patch version `2025.12.1` → Tag `v2025.12.1`
+- Patch version `2025.12.2` → Tag `v2025.12.2`
+
+#### Error Handling
+
+Common issues and solutions:
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Invalid version format" | Version doesn't match YYYY.MM or YYYY.MM.P | Use correct format |
+| "Release notes not found in main" | PR not merged yet | Wait for PR merge to complete |
+| "Tag already exists" | Version already tagged | Use `-Force` to overwrite or use a different version |
+| "GitHub CLI not authenticated" | gh not logged in | Run `gh auth login` |
+
+---
+
 ## Directory Structure
 
 ```
 scripts/_internal/
 ├── README.md               # This file
-├── SyncToPublic.ps1        # Sync changes to public repo script
+├── SyncToPublic.ps1        # Sync changes to public repo and create PR
+├── TagPublicRepo.ps1       # Create Git tags after PR is merged
 └── [future scripts]        # Additional internal tools
 ```
+
+## Release Workflow
+
+Complete workflow for releasing a new version:
+
+### Step 1: Sync Changes (SyncToPublic.ps1)
+
+```powershell
+# For main version release
+.\SyncToPublic.ps1 -Version "2025.12"
+
+# For patch release
+.\SyncToPublic.ps1 -Version "2025.12.1"
+```
+
+This creates a release branch and PR in the public repository.
+
+### Step 2: Review and Merge PR
+
+1. Review the PR in the public repository
+2. Run tests and validation
+3. Merge the PR to main
+
+### Step 3: Tag the Release (TagPublicRepo.ps1)
+
+```powershell
+# After PR is merged
+.\TagPublicRepo.ps1 -Version "2025.12"
+```
+
+This creates a Git tag on the main branch.
+
+### Step 4: Create GitHub Release
+
+1. Click the link provided by TagPublicRepo.ps1
+2. Add release notes (auto-populated from tag)
+3. Publish the GitHub Release
+
+### Step 5: Announce
+
+Communicate the release to stakeholders.
 
 ## Best Practices
 
@@ -231,9 +369,9 @@ scripts/_internal/
 
 ### After PR is Merged in Public Repo
 
-1. **Create Git Tags**: Tag the release in public repository
-2. **Update README**: Update main README.md with latest release link
-3. **Create GitHub Release**: Generate release notes and artifacts
+1. **Run TagPublicRepo.ps1**: Create Git tag immediately after merge
+2. **Create GitHub Release**: Use the provided link to create release
+3. **Update README**: Update main README.md with latest release link (if needed)
 4. **Announce**: Communicate release to stakeholders
 
 ### Version Management
