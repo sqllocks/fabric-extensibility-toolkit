@@ -28,12 +28,16 @@ module.exports = {
             "process.env.WORKLOAD_NAME": JSON.stringify(process.env.WORKLOAD_NAME),
             "process.env.ITEM_NAMES": JSON.stringify(process.env.ITEM_NAMES),
             "process.env.WORKLOAD_VERSION": JSON.stringify(process.env.WORKLOAD_VERSION),
-            "process.env.LOG_LEVEL": JSON.stringify(process.env.LOG_LEVEL)
+            "process.env.LOG_LEVEL": JSON.stringify(process.env.LOG_LEVEL),
+            "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || 'production'),
+            "process.env.ENABLE_PLAYGROUND": JSON.stringify(process.env.ENABLE_PLAYGROUND || 'false'),
+        }),
+        new Webpack.ProvidePlugin({
+            process: 'process/browser',
         }),
         new HtmlWebpackPlugin({
             template: "./app/index.html",
         }),
-        // -- uncomment when static are required to be copied during build --
         new CopyWebpackPlugin({
             patterns: [
                 {
@@ -60,11 +64,11 @@ module.exports = {
                 loader: "ts-loader",
             },
             {
-                test: /\.s[ac]ss$/i, // this is for loading scss
+                test: /\.s[ac]ss$/i,
                 use: ["style-loader", "css-loader", "sass-loader"],
             },
             {
-                test: /\.(png|jpg|jpeg|svg)$/i, // this is for loading assests
+                test: /\.(png|jpg|jpeg|svg)$/i,
                 type: '/asset/resource'
             },
         ],
