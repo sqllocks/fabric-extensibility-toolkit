@@ -32,7 +32,7 @@ module.exports = {
             "process.env.ENABLE_PLAYGROUND": JSON.stringify(process.env.ENABLE_PLAYGROUND || 'false'),
         }),
         new Webpack.ProvidePlugin({
-            process: 'process/browser',
+            process: 'process/browser.js',
         }),
         new HtmlWebpackPlugin({
             template: "./app/index.html",
@@ -53,7 +53,11 @@ module.exports = {
     ],
     resolve: {
         modules: [__dirname, "node_modules"],
-        extensions: ["*", ".js", ".jsx", ".tsx", ".ts"],
+        extensions: [".*", ".js", ".jsx", ".tsx", ".ts"],
+        fullySpecified: false,
+        alias: {
+            'process/browser': require.resolve('process/browser.js')
+        }
     },
     module: {
         rules: [
@@ -68,8 +72,14 @@ module.exports = {
             },
             {
                 test: /\.(png|jpg|jpeg|svg)$/i,
-                type: '/asset/resource'
+                type: 'asset/resource'
             },
+            {
+                test: /\.m?js/,
+                resolve: {
+                    fullySpecified: false
+                }
+            }
         ],
     }
 };
