@@ -164,18 +164,12 @@ try {
     $releaseNotesPath = Get-ReleaseNotesPath $Version
     Write-Information "Looking for release notes at: $releaseNotesPath"
     
-    try {
-        $response = gh api "repos/$PublicRepoOwner/$PublicRepoName/contents/$releaseNotesPath?ref=$Branch" 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-StepSuccess "Release notes found in $Branch branch: $releaseNotesPath"
-        } else {
-            throw "Release notes not found"
-        }
-    }
-    catch {
+    $releaseNotesResponse = gh api "repos/$PublicRepoOwner/$PublicRepoName/contents/$releaseNotesPath?ref=$Branch" 2>&1
+    if ($LASTEXITCODE -ne 0) {
         Write-StepError "Release notes not found in $Branch branch: $releaseNotesPath"
         throw "Cannot create tag - release notes must be merged to $Branch first. Please complete the release PR merge before tagging."
     }
+    Write-StepSuccess "Release notes found in $Branch branch: $releaseNotesPath"
     
     # Step 3: Check if tag already exists
     Write-StepHeader "Step 3: Checking for Existing Tag"
@@ -183,19 +177,16 @@ try {
     $tagName = "v$Version"
     $tagExists = $false
     
-    try {
-        $existingTag = gh api "repos/$PublicRepoOwner/$PublicRepoName/git/refs/tags/$tagName" 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            $tagExists = $true
-            if ($Force) {
-                Write-StepWarning "Tag $tagName already exists - will be overwritten (Force mode)"
-            } else {
-                Write-StepError "Tag $tagName already exists"
-                throw "Tag $tagName already exists. Use -Force to overwrite."
-            }
+    $existingTag = gh api "repos/$PublicRepoOwner/$PublicRepoName/git/refs/tags/$tagName" 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $tagExists = $true
+        if ($Force) {
+            Write-StepWarning "Tag $tagName already exists - will be overwritten (Force mode)"
+        } else {
+            Write-StepError "Tag $tagName already exists"
+            throw "Tag $tagName already exists. Use -Force to overwrite."
         }
-    }
-    catch {
+    } else {
         Write-StepSuccess "Tag $tagName does not exist - ready to create"
     }
     
