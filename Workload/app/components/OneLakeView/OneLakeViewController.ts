@@ -45,26 +45,33 @@ export async function getTables(
 }
 
 function convertToTableMetadata(path: OneLakeStoragePathMetadata, deltaLogDirectory: string): TableMetadata {
-    let pathName = path.name;
-    let parts = pathName.split('/');
+    const pathName = path.name;
+    const parts = pathName.split('/');
     let tableName: string;
     let schemaName: string | null = null;
 
-    // Remove '_delta_log' if present
+    // Remove '_delta_log' if present to get the table directory
+    let tablePathParts = parts;
     if (pathName.endsWith(deltaLogDirectory)) {
-        pathName = parts.slice(0, -1).join('/');
-        parts = pathName.split('/');
+        tablePathParts = parts.slice(0, -1);
     }
 
-    tableName = parts[parts.length - 1];
-    if (parts.length === 4) {
-        schemaName = parts[2];
+    // Path structure: <itemId>/Tables/...<Subdirectories>.../<tableName>
+    tableName = tablePathParts[tablePathParts.length - 1];
+    if (tablePathParts.length === 4) {
+        schemaName = tablePathParts[2];
     }
+
+    // Remove the prefix (itemId/Tables/) from the path - same pattern as files
+    const tablePathName = tablePathParts.join('/');
+    
+    // Construct relativePath: Tables/...
+    const relativePath = tablePathName.substring(parts[0].length + 1) + '/';
 
     return {
-        prefix: "Tables",
+        rootFolder: "Tables",
         name: tableName,
-        path: pathName + '/',
+        relativePath: relativePath,
         schema: schemaName,
     } as TableMetadata;
 }
@@ -103,13 +110,13 @@ function convertToFileMetadata(path: OneLakeStoragePathMetadata, directory: stri
     // Path structure: <itemId>/Files/...<Subdirectories>.../<fileName>
     const fileName = parts[parts.length - 1];
 
-    // Remove the prefix (itemId/Files/) from the path
-    const relativePath = pathName.length > directory.length ? pathName.substring(directory.length) : "";
+    // Construct relativePath: Files/...
+    const relativePath = pathName.substring(parts[0].length + 1);
 
     return {
-        prefix: "Files",
+        rootFolder: "Files",
         name: fileName,
-        path: relativePath,
+        relativePath: relativePath,
         isDirectory: path.isDirectory,
         isShortcut: path.isShortcut
     } as FileMetadata;
@@ -144,15 +151,13 @@ export async function getShortcutContents(
         const parts = pathName.split('/');
         const fileName = parts[parts.length - 1];
         
-        // Remove the prefix from the path to get relative path within the shortcut
-        const relativePath = pathName.length > directory.length 
-            ? pathName.substring(directory.length + 1) // +1 to remove leading slash
-            : "";
+        // Construct relativePath: Tables/... or Files/...
+        const relativePath = pathName.substring(parts[0].length + 1);
 
         return {
-            prefix: folderPrefix,
+            rootFolder: folderPrefix,
             name: fileName,
-            path: relativePath,
+            relativePath: relativePath,
             isDirectory: path.isDirectory,
             isShortcut: path.isShortcut
         } as FileMetadata;
@@ -187,10 +192,8 @@ export async function getFilesInPath(
         const parts = pathName.split('/');
         const fileName = parts[parts.length - 1];
         
-        // Remove the prefix from the path
-        const relativePath = pathName.length > directory.length 
-            ? pathName.substring(directory.length + 1)
-            : "";
+        // Construct relativePath: Files/... or Tables/...
+        const relativePath = pathName.substring(parts[0].length + 1);
 
         // Determine the prefix (Files or Tables)
         const prefix = directoryPath.startsWith('Files/') ? 'Files' : 
@@ -198,9 +201,9 @@ export async function getFilesInPath(
                      directoryPath.split('/')[0];
 
         return {
-            prefix,
+            rootFolder: prefix,
             name: fileName,
-            path: relativePath,
+            relativePath: relativePath,
             isDirectory: path.isDirectory,
             isShortcut: path.isShortcut
         } as FileMetadata;

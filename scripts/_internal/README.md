@@ -8,9 +8,17 @@ This directory contains internal scripts and tools used by the Microsoft team fo
 
 Automates syncing changes from the staging repository to the public repository by creating a Pull Request.
 
+**Use this script first** to sync changes and create a PR.
+
+### TagPublicRepo.ps1
+
+Creates Git tags in the public repository after a release PR has been merged.
+
+**Use this script second** after the PR is merged to main.
+
 #### Purpose
 - Validates version numbers and release notes
-- Creates versioned release branch (dev/release/{VERSION}) in public repository
+- Creates versioned release branch (release/{VERSION}) in public repository
 - Syncs changes from staging to public release branch
 - Creates Pull Requests for review
 - Does NOT create tags or update README (done separately in public repo)
@@ -62,7 +70,7 @@ Automates syncing changes from the staging repository to the public repository b
 2. **Preparation**
    - Creates temporary working directory
    - Clones public repository
-   - Creates or checks out dev/release/{VERSION} branch in public repository
+   - Creates or checks out release/{VERSION} branch in public repository
 
 3. **Synchronization**
    - Copies files from staging repository (SourceBranch)
@@ -70,14 +78,14 @@ Automates syncing changes from the staging repository to the public repository b
    - Commits changes to release branch
 
 4. **Publication**
-   - Pushes dev/release/{VERSION} branch to public repository
-   - Creates Pull Request from dev/release/{VERSION} to target branch
+   - Pushes release/{VERSION} branch to public repository
+   - Creates Pull Request from release/{VERSION} to target branch
 
 5. **Cleanup**
    - Removes temporary directories
    - Reports completion status
 
-> **Note**: The script creates a versioned release branch (dev/release/{VERSION}) in the public repository, allowing for review and testing before merging to the target branch.
+> **Note**: The script creates a versioned release branch (release/{VERSION}) in the public repository, allowing for review and testing before merging to the target branch.
 
 #### Exclusion Patterns
 
@@ -158,29 +166,29 @@ The script creates versioned release branches differently based on version type:
 **Source Branch** (staging): The branch in staging repository to sync from (default: `main`)
 
 **Release Branch** (public): 
-- **Main versions** (e.g., `2025.12`): Creates new `dev/release/2025.12` branch
-- **Patch versions** (e.g., `2025.12.1`): Uses existing `dev/release/2025.12` branch
+- **Main versions** (e.g., `2025.12`): Creates new `release/2025.12` branch
+- **Patch versions** (e.g., `2025.12.1`): Uses existing `release/2025.12` branch
 
 **Target Branch** (public): The branch in public repository to create the PR against (default: `main`)
 
 **Workflow**:
 1. Clones public repository
-2. **For main versions**: Creates `dev/release/{VERSION}` from target branch if it doesn't exist
-3. **For patch versions**: Checks out existing `dev/release/{MAIN_VERSION}` (errors if not found)
+2. **For main versions**: Creates `release/{VERSION}` from target branch if it doesn't exist
+3. **For patch versions**: Checks out existing `release/{MAIN_VERSION}` (errors if not found)
 4. Syncs files from staging repository's source branch
 5. Commits and pushes to release branch in public repository
 6. Creates Pull Request from release branch → target branch
 
 **Example Workflows**:
-- Staging `main` → Public `dev/release/2025.12` → PR to `main`: Monthly release (creates new branch)
-- Staging `main` → Public `dev/release/2025.12` → PR to `main`: First patch (uses existing branch)
-- Staging `hotfix` → Public `dev/release/2025.12` → PR to `main`: Second patch (uses existing branch)
+- Staging `main` → Public `release/2025.12` → PR to `main`: Monthly release (creates new branch)
+- Staging `main` → Public `release/2025.12` → PR to `main`: First patch (uses existing branch)
+- Staging `hotfix` → Public `release/2025.12` → PR to `main`: Second patch (uses existing branch)
 
 **Branch Lifecycle**:
-1. **2025.12** (main version): Creates `dev/release/2025.12` → PR → merge to main
-2. **2025.12.1** (patch): Updates `dev/release/2025.12` → PR → merge to main  
-3. **2025.12.2** (patch): Updates `dev/release/2025.12` → PR → merge to main
-4. **2026.1** (main version): Creates `dev/release/2026.1` → PR → merge to main
+1. **2025.12** (main version): Creates `release/2025.12` → PR → merge to main
+2. **2025.12.1** (patch): Updates `release/2025.12` → PR → merge to main  
+3. **2025.12.2** (patch): Updates `release/2025.12` → PR → merge to main
+4. **2026.1** (main version): Creates `release/2026.1` → PR → merge to main
 
 **Benefits**:
 - **Safety**: Release branch can be reviewed and tested before merging to main
@@ -210,14 +218,144 @@ Common issues and solutions:
 - Only curated changes are synchronized
 - All commits are reviewed via Pull Request process
 
+---
+
+### TagPublicRepo.ps1
+
+Creates Git tags in the public repository after a release PR has been merged to main.
+
+#### Purpose
+- Validates that release notes exist in the main branch
+- Creates annotated Git tags (v{VERSION})
+- Pushes tags to the public repository
+- Provides GitHub Release creation link
+
+#### Usage
+
+```powershell
+# Tag a main version release
+.\TagPublicRepo.ps1 -Version "2025.12"
+
+# Tag a patch release
+.\TagPublicRepo.ps1 -Version "2025.12.1"
+
+# Dry run to see what would be done
+.\TagPublicRepo.ps1 -Version "2025.12" -DryRun
+
+# Overwrite existing tag
+.\TagPublicRepo.ps1 -Version "2025.12" -Force
+```
+
+#### Parameters
+
+| Parameter | Description | Default | Required |
+|-----------|-------------|---------|----------|
+| `-Version` | Version number (YYYY.MM or YYYY.MM.P format) | - | ✅ |
+| `-PublicRepoUrl` | URL of public repository | `https://github.com/microsoft/fabric-extensibility-toolkit.git` | ❌ |
+| `-PublicRepoOwner` | GitHub repository owner | `microsoft` | ❌ |
+| `-PublicRepoName` | GitHub repository name | `fabric-extensibility-toolkit` | ❌ |
+| `-Branch` | Branch to tag in public repository | `main` | ❌ |
+| `-Force` | Overwrite existing tag | `false` | ❌ |
+| `-DryRun` | Show what would be done without making changes | `false` | ❌ |
+
+#### Prerequisites
+
+1. **Release PR Merged**: The release PR must be merged to main before tagging
+2. **Release Notes in Main**: File must exist at `docs/ReleaseNotes/{YYYY}/v{VERSION}.md` in the main branch
+3. **GitHub CLI**: Must be authenticated (`gh auth login`)
+
+#### Process Flow
+
+1. **Validation**
+   - Checks version format (YYYY.MM or YYYY.MM.P)
+   - Verifies GitHub CLI authentication
+
+2. **Release Notes Check**
+   - Confirms release notes file exists in main branch
+   - Fails if release notes are not yet merged
+
+3. **Tag Check**
+   - Checks if tag already exists
+   - Requires `-Force` to overwrite existing tags
+
+4. **Tag Creation**
+   - Clones public repository
+   - Creates annotated tag with release notes as message
+   - Pushes tag to remote
+
+5. **Next Steps**
+   - Provides link to create GitHub Release
+
+#### Tag Format
+
+Tags are created as `v{VERSION}`:
+- Main version `2025.12` → Tag `v2025.12`
+- Patch version `2025.12.1` → Tag `v2025.12.1`
+- Patch version `2025.12.2` → Tag `v2025.12.2`
+
+#### Error Handling
+
+Common issues and solutions:
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Invalid version format" | Version doesn't match YYYY.MM or YYYY.MM.P | Use correct format |
+| "Release notes not found in main" | PR not merged yet | Wait for PR merge to complete |
+| "Tag already exists" | Version already tagged | Use `-Force` to overwrite or use a different version |
+| "GitHub CLI not authenticated" | gh not logged in | Run `gh auth login` |
+
+---
+
 ## Directory Structure
 
 ```
 scripts/_internal/
 ├── README.md               # This file
-├── SyncToPublic.ps1        # Sync changes to public repo script
+├── SyncToPublic.ps1        # Sync changes to public repo and create PR
+├── TagPublicRepo.ps1       # Create Git tags after PR is merged
 └── [future scripts]        # Additional internal tools
 ```
+
+## Release Workflow
+
+Complete workflow for releasing a new version:
+
+### Step 1: Sync Changes (SyncToPublic.ps1)
+
+```powershell
+# For main version release
+.\SyncToPublic.ps1 -Version "2025.12"
+
+# For patch release
+.\SyncToPublic.ps1 -Version "2025.12.1"
+```
+
+This creates a release branch and PR in the public repository.
+
+### Step 2: Review and Merge PR
+
+1. Review the PR in the public repository
+2. Run tests and validation
+3. Merge the PR to main
+
+### Step 3: Tag the Release (TagPublicRepo.ps1)
+
+```powershell
+# After PR is merged
+.\TagPublicRepo.ps1 -Version "2025.12"
+```
+
+This creates a Git tag on the main branch.
+
+### Step 4: Create GitHub Release
+
+1. Click the link provided by TagPublicRepo.ps1
+2. Add release notes (auto-populated from tag)
+3. Publish the GitHub Release
+
+### Step 5: Announce
+
+Communicate the release to stakeholders.
 
 ## Best Practices
 
@@ -231,9 +369,9 @@ scripts/_internal/
 
 ### After PR is Merged in Public Repo
 
-1. **Create Git Tags**: Tag the release in public repository
-2. **Update README**: Update main README.md with latest release link
-3. **Create GitHub Release**: Generate release notes and artifacts
+1. **Run TagPublicRepo.ps1**: Create Git tag immediately after merge
+2. **Create GitHub Release**: Use the provided link to create release
+3. **Update README**: Update main README.md with latest release link (if needed)
 4. **Announce**: Communicate release to stakeholders
 
 ### Version Management

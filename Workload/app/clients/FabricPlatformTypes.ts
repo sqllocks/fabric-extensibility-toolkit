@@ -298,6 +298,7 @@ export interface OneLakeStorageContainerMetadata {
   paths: OneLakeStoragePathMetadata[];
 }
 
+
 // OneLake Shortcuts types
 export interface Shortcut {
   path: string;

@@ -6,9 +6,9 @@
     This script automates syncing changes to the public Microsoft Fabric Extensibility Toolkit repository:
     1. Validates the version number format
     2. Checks for corresponding release notes
-    3. Creates or updates dev/release/{VERSION} branch in public repository
+    3. Creates or updates release/{VERSION} branch in public repository
     4. Syncs changes from staging source branch to release branch (with exclusions)
-    5. Creates a Pull Request from dev/release/{VERSION} to target branch
+    5. Creates a Pull Request from release/{VERSION} to target branch
 
 .PARAMETER Version
     The version number in format YYYY.MM.P (e.g., 2025.11.1)
@@ -36,7 +36,7 @@
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11"
-    Syncs from staging/main to public/dev/release/2025.11 and creates PR to main
+    Syncs from staging/main to public/release/2025.11 and creates PR to main
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11" -DryRun
@@ -44,7 +44,7 @@
 
 .EXAMPLE
     .\SyncToPublic.ps1 -Version "2025.11.1" -SourceBranch "dev" -TargetBranch "main"
-    Syncs from staging/dev to public/dev/release/2025.11.1 and creates PR to main
+    Syncs from staging/dev to public/release/2025.11.1 and creates PR to main
 
 #>
 
@@ -222,34 +222,55 @@ function Copy-FilesWithExclusions {
     
     Write-Information "Copying files from $SourcePath to $DestinationPath..."
     
-    # Create robocopy exclude file
-    $excludeFile = Join-Path $env:TEMP "robocopy-exclude-$(Get-Random).txt"
-    $ExcludePatterns | Out-File -FilePath $excludeFile -Encoding UTF8
-    
     try {
-        # Use robocopy for efficient copying with exclusions
+        # Build robocopy arguments
         $robocopyArgs = @(
             $SourcePath
             $DestinationPath
             "/MIR"  # Mirror directory tree
-            "/XF"   # Exclude files
-            "/XD"   # Exclude directories
+            "/NFL"  # No file list
+            "/NDL"  # No directory list
+            "/NP"   # No progress
         )
         
-        # Add exclude patterns
+        # Separate directories and files to exclude
+        $excludeDirs = @()
+        $excludeFiles = @()
+        
         foreach ($pattern in $ExcludePatterns) {
-            if ($pattern.EndsWith("/*")) {
-                $robocopyArgs += "/XD"
-                $robocopyArgs += $pattern.Replace("/*", "")
+            # Normalize path separators to backslashes for Windows
+            $normalizedPattern = $pattern.Replace("/", "\")
+            
+            if ($normalizedPattern.EndsWith("\*")) {
+                # Directory pattern - remove the \* suffix
+                $dirPath = $normalizedPattern.Substring(0, $normalizedPattern.Length - 2)
+                $excludeDirs += $dirPath
+            } elseif ($normalizedPattern.Contains("\")) {
+                # Path with directory - exclude the directory
+                $dirPath = Split-Path $normalizedPattern -Parent
+                if ($dirPath) {
+                    $excludeDirs += $dirPath
+                }
             } else {
-                $robocopyArgs += "/XF"
-                $robocopyArgs += $pattern
+                # File pattern (e.g., *.tmp, *.log)
+                $excludeFiles += $normalizedPattern
             }
         }
         
-        $robocopyArgs += "/NFL" # No file list
-        $robocopyArgs += "/NDL" # No directory list
-        $robocopyArgs += "/NP"  # No progress
+        # Add directory exclusions
+        if ($excludeDirs.Count -gt 0) {
+            $robocopyArgs += "/XD"
+            $robocopyArgs += $excludeDirs
+        }
+        
+        # Add file exclusions
+        if ($excludeFiles.Count -gt 0) {
+            $robocopyArgs += "/XF"
+            $robocopyArgs += $excludeFiles
+        }
+        
+        Write-Information "Excluding directories: $($excludeDirs -join ', ')"
+        Write-Information "Excluding file patterns: $($excludeFiles -join ', ')"
         
         $result = & robocopy @robocopyArgs
         
@@ -258,12 +279,21 @@ function Copy-FilesWithExclusions {
             throw "Robocopy failed with exit code $LASTEXITCODE"
         }
         
+        # Remove specific excluded directories from destination that shouldn't exist in public repo
+        # Don't remove .git, .vs, .vscode as these are excluded from copying but shouldn't be removed from destination
+        $dirsToRemove = @("scripts\_internal", "Workload\node_modules", "build", "release")
+        foreach ($dir in $dirsToRemove) {
+            $fullPath = Join-Path $DestinationPath $dir
+            if (Test-Path $fullPath) {
+                Write-Information "Removing excluded directory: $dir"
+                Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
         Write-StepSuccess "Files copied successfully"
     }
-    finally {
-        if (Test-Path $excludeFile) {
-            Remove-Item $excludeFile -Force
-        }
+    catch {
+        throw "File copy failed: $_"
     }
 }
 
@@ -321,10 +351,10 @@ try {
         $isPatch = Test-IsPatchVersion $Version
         if ($isPatch) {
             $mainVersion = Get-MainVersion $Version
-            $releaseBranch = "dev/release/$mainVersion"
+            $releaseBranch = "release/$mainVersion"
             $branchNote = "(patch version - uses existing release branch)"
         } else {
-            $releaseBranch = "dev/release/$Version"
+            $releaseBranch = "release/$Version"
             $branchNote = "(main version - creates new release branch)"
         }
         
@@ -372,19 +402,19 @@ try {
     Invoke-GitCommand "clone $PublicRepoUrl `"$publicRepoDir`"" -WorkingDirectory $TempDir
     Write-StepSuccess "Cloned public repository"
     
-    # Checkout or create dev/release branch in public repo
+    # Checkout or create release branch in public repo
     Write-StepHeader "Step 3.1: Preparing Release Branch"
     
     # Determine which branch to use based on version type
     $isPatch = Test-IsPatchVersion $Version
     if ($isPatch) {
-        # Patch versions use the main version's release branch (e.g., 2025.12.1 uses dev/release/2025.12)
+        # Patch versions use the main version's release branch (e.g., 2025.12.1 uses release/2025.12)
         $mainVersion = Get-MainVersion $Version
-        $releaseBranch = "dev/release/$mainVersion"
+        $releaseBranch = "release/$mainVersion"
         Write-Information "Patch version detected - using release branch: $releaseBranch"
     } else {
-        # Main versions create their own release branch (e.g., 2025.12 creates dev/release/2025.12)
-        $releaseBranch = "dev/release/$Version"
+        # Main versions create their own release branch (e.g., 2025.12 creates release/2025.12)
+        $releaseBranch = "release/$Version"
         Write-Information "Main version detected - using release branch: $releaseBranch"
     }
     
@@ -393,18 +423,22 @@ try {
         
         # Check if release branch exists on remote
         $remoteBranchExists = $false
-        try {
-            git ls-remote --heads origin $releaseBranch | Out-Null
-            $remoteBranchExists = $LASTEXITCODE -eq 0
-        }
-        catch {
-            $remoteBranchExists = $false
+        $remoteBranchCheck = git ls-remote --heads origin $releaseBranch 2>&1
+        if ($LASTEXITCODE -eq 0 -and $remoteBranchCheck) {
+            $remoteBranchExists = $true
         }
         
         if ($remoteBranchExists) {
             # Checkout existing remote branch
-            Invoke-GitCommand "checkout $releaseBranch" -WorkingDirectory $publicRepoDir
-            Invoke-GitCommand "pull origin $releaseBranch" -WorkingDirectory $publicRepoDir
+            Write-Information "Checking out existing branch: $releaseBranch"
+            git checkout $releaseBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to checkout branch $releaseBranch"
+            }
+            git pull origin $releaseBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to pull branch $releaseBranch"
+            }
             Write-StepSuccess "Checked out existing release branch: $releaseBranch"
         }
         else {
@@ -413,7 +447,11 @@ try {
                 throw "Patch versions require an existing release branch. Please create main version $mainVersion first."
             }
             # Create new branch from target branch (only for main versions)
-            Invoke-GitCommand "checkout -b $releaseBranch origin/$TargetBranch" -WorkingDirectory $publicRepoDir
+            Write-Information "Creating new branch: $releaseBranch from origin/$TargetBranch"
+            git checkout -b $releaseBranch origin/$TargetBranch 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create branch $releaseBranch from origin/$TargetBranch"
+            }
             Write-StepSuccess "Created new release branch: $releaseBranch from $TargetBranch"
         }
     }
@@ -445,21 +483,28 @@ try {
     # Step 6: Push release branch
     Write-StepHeader "Step 6: Pushing Release Branch"
     
+    Push-Location $publicRepoDir
     try {
-        # Use --force-with-lease to safely update existing branches
-        Invoke-GitCommand "push origin $releaseBranch --force-with-lease" -WorkingDirectory $publicRepoDir
-        Write-StepSuccess "Pushed release branch to remote"
+        # Try regular push first for new branches
+        Write-Information "Pushing $releaseBranch to remote..."
+        $pushOutput = git push origin $releaseBranch 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-StepSuccess "Pushed release branch to remote"
+        } else {
+            # Try force-with-lease for existing branches
+            Write-Information "Regular push failed, trying force-with-lease..."
+            $pushOutput = git push origin $releaseBranch --force-with-lease 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-StepSuccess "Pushed release branch to remote with force-with-lease"
+            } else {
+                Write-StepError "Failed to push release branch"
+                Write-Error "Git output: $pushOutput"
+                throw "Failed to push $releaseBranch to remote repository"
+            }
+        }
     }
-    catch {
-        try {
-            # Fallback to regular push for new branches
-            Invoke-GitCommand "push origin $releaseBranch" -WorkingDirectory $publicRepoDir
-            Write-StepSuccess "Pushed new release branch to remote"
-        }
-        catch {
-            Write-StepError "Failed to push release branch: $_"
-            throw
-        }
+    finally {
+        Pop-Location
     }
     
     # Step 7: Create Pull Request
@@ -496,16 +541,24 @@ $releaseNotes
 /cc @$PublicRepoOwner
 "@
             
-            $prTitle = "Sync v$Version"
-            gh pr create --title $prTitle --body $prBody --base $TargetBranch --head $releaseBranch
-            Write-StepSuccess "Pull Request created successfully"
-            Write-Information "✓ Release branch: $releaseBranch"
-            Write-Information "✓ Target branch: $TargetBranch"
-            Write-Information "✓ PR must be reviewed and merged to complete sync"
+            # Open PR creation in browser (bypasses EMU restrictions)
+            Write-Information "Opening PR creation in browser..."
+            gh pr create --repo $PublicRepoOwner/$PublicRepoName --base $TargetBranch --head $releaseBranch --web
+            if ($LASTEXITCODE -eq 0) {
+                Write-StepSuccess "Opened PR creation page in browser"
+                Write-Information "✓ Release branch: $releaseBranch"
+                Write-Information "✓ Target branch: $TargetBranch"
+                Write-Information "✓ Complete the PR creation in your browser"
+            } else {
+                Write-StepWarning "Failed to open browser"
+                Write-Information "You can manually create a PR at:"
+                Write-Information "https://github.com/$PublicRepoOwner/$PublicRepoName/compare/$TargetBranch...$releaseBranch"
+            }
         }
         catch {
-            Write-StepError "Failed to create PR: $_"
+            Write-StepWarning "Failed to create PR: $_"
             Write-Information "You can manually create a PR from branch: $releaseBranch to $TargetBranch"
+            Write-Information "Or use: gh pr create --repo $PublicRepoOwner/$PublicRepoName --base $TargetBranch --head $releaseBranch"
         }
         finally {
             Pop-Location
@@ -532,8 +585,8 @@ $releaseNotes
     Write-Information "Public Repository: $PublicRepoUrl"
     
     if (-not $skipPR) {
-        Write-Information "Pull Request: Created automatically and ready for review"
-        Write-Information "⚠️  NEXT STEPS: Review and merge the PR from $releaseBranch to $TargetBranch"
+        Write-Information "Pull Request: Check output above for status"
+        Write-Information "⚠️  NEXT STEPS: If PR was created, review and merge. Otherwise create manually from $releaseBranch to $TargetBranch"
     } else {
         Write-Information "Pull Request: Manual creation required"
         Write-Information "⚠️  NEXT STEPS: Create PR manually from branch: $releaseBranch to $TargetBranch"
