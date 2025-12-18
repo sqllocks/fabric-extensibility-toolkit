@@ -63,16 +63,15 @@ function convertToTableMetadata(path: OneLakeStoragePathMetadata, deltaLogDirect
     }
 
     // Remove the prefix (itemId/Tables/) from the path - same pattern as files
-    const directory = `${parts[0]}/Tables/`;
     const tablePathName = tablePathParts.join('/');
-    const relativePath = tablePathName.length > directory.length ? 
-        tablePathName.substring(directory.length) + '/' : 
-        tableName + '/';
+    
+    // Construct inItemPath: Tables/...
+    const inItemPath = tablePathName.substring(parts[0].length + 1) + '/';
 
     return {
-        prefix: "Tables",
+        rootFolder: "Tables",
         name: tableName,
-        path: relativePath,
+        inItemPath: inItemPath,
         schema: schemaName,
     } as TableMetadata;
 }
@@ -111,13 +110,13 @@ function convertToFileMetadata(path: OneLakeStoragePathMetadata, directory: stri
     // Path structure: <itemId>/Files/...<Subdirectories>.../<fileName>
     const fileName = parts[parts.length - 1];
 
-    // Remove the prefix (itemId/Files/) from the path
-    const relativePath = pathName.length > directory.length ? pathName.substring(directory.length) : "";
+    // Remove the prefix (itemId/) from the path
+    const inItemPath = pathName.substring(parts[0].length + 1);
 
     return {
-        prefix: "Files",
+        rootFolder: "Files",
         name: fileName,
-        path: relativePath,
+        inItemPath: inItemPath,
         isDirectory: path.isDirectory,
         isShortcut: path.isShortcut
     } as FileMetadata;
@@ -153,14 +152,12 @@ export async function getShortcutContents(
         const fileName = parts[parts.length - 1];
         
         // Remove the prefix from the path to get relative path within the shortcut
-        const relativePath = pathName.length > directory.length 
-            ? pathName.substring(directory.length + 1) // +1 to remove leading slash
-            : "";
+        const inItemPath = pathName.substring(parts[0].length + 1);
 
         return {
-            prefix: folderPrefix,
+            rootFolder: folderPrefix,
             name: fileName,
-            path: relativePath,
+            inItemPath: inItemPath,
             isDirectory: path.isDirectory,
             isShortcut: path.isShortcut
         } as FileMetadata;
@@ -196,9 +193,7 @@ export async function getFilesInPath(
         const fileName = parts[parts.length - 1];
         
         // Remove the prefix from the path
-        const relativePath = pathName.length > directory.length 
-            ? pathName.substring(directory.length + 1)
-            : "";
+        const inItemPath = pathName.substring(parts[0].length + 1);
 
         // Determine the prefix (Files or Tables)
         const prefix = directoryPath.startsWith('Files/') ? 'Files' : 
@@ -206,9 +201,9 @@ export async function getFilesInPath(
                      directoryPath.split('/')[0];
 
         return {
-            prefix,
+            rootFolder: prefix,
             name: fileName,
-            path: relativePath,
+            inItemPath: inItemPath,
             isDirectory: path.isDirectory,
             isShortcut: path.isShortcut
         } as FileMetadata;
