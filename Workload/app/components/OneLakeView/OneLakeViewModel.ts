@@ -16,7 +16,7 @@ import { ItemReference } from "../../controller/ItemCRUDController";
 export interface OneLakeObjectMetadata {
     rootFolder: string;
     name: string;
-    inItemPath: string;
+    relativePath: string;
     isShortcut?: boolean;
 }
 

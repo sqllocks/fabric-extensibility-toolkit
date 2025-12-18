@@ -142,9 +142,9 @@ export function OneLakeView(props: OneLakeViewProps) {
   }
 
   function tableSelectedCallback(tableSelected: TableMetadata) {
-    const tableFilePath = OneLakeStorageClient.getPath(selectedItem.workspaceId, selectedItem.id, tableSelected.inItemPath);
+    const tableFilePath = OneLakeStorageClient.getPath(selectedItem.workspaceId, selectedItem.id, tableSelected.relativePath);
     // Update selection state without modifying the tables array
-    setSelectedTablePath(tableSelected.inItemPath); // Keep original path for selection comparison
+    setSelectedTablePath(tableSelected.relativePath); // Keep original path for selection comparison
     setSelectedFilePath(null); // Clear file selection when table is selected
     if (props.callbacks.onTableSelected && tableSelected.name) {
       props.callbacks.onTableSelected(tableSelected.name, tableFilePath);
@@ -152,9 +152,9 @@ export function OneLakeView(props: OneLakeViewProps) {
   }
 
   async function fileSelectedCallback(fileSelected: FileMetadata) {
-    const fullFilePath = OneLakeStorageClient.getPath(selectedItem.workspaceId, selectedItem.id, fileSelected.inItemPath);
+    const fullFilePath = OneLakeStorageClient.getPath(selectedItem.workspaceId, selectedItem.id, fileSelected.relativePath);
     // Update selection state without modifying the files array
-    setSelectedFilePath(fileSelected.inItemPath);
+    setSelectedFilePath(fileSelected.relativePath);
     setSelectedTablePath(null); // Clear table selection when file is selected
     if (props.callbacks.onFileSelected && fileSelected.name) {
       await props.callbacks.onFileSelected(fileSelected.name, fullFilePath);

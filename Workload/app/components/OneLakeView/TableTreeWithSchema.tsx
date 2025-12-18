@@ -30,7 +30,7 @@ export function TableTreeWithSchema(props: OneLakeViewTablesTreeProps) {
                             {tablesInOneLakeGroupedBySchema[schema].map((table) => (
                                 <TreeItem 
                                 key={table.name} 
-                                accessKey={table.inItemPath} 
+                                accessKey={table.relativePath} 
                                 itemType="leaf"
                                 onClick={() => onSelectTableCallback(table)}
                                 >
@@ -38,7 +38,7 @@ export function TableTreeWithSchema(props: OneLakeViewTablesTreeProps) {
                                         relationship='label'
                                         content={table.name}>
                                         <TreeItemLayout
-                                            className={(selectedTablePath === table.inItemPath ? "selected" : "")}
+                                            className={(selectedTablePath === table.relativePath ? "selected" : "")}
                                             iconBefore={<Table20Regular />}>
                                             {table.name}
                                         </TreeItemLayout>
