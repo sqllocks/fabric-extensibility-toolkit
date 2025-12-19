@@ -65,6 +65,12 @@ param (
     [String]$WorkloadVersion = "1.0.0"
 )
 
+# Check for PowerShell 7+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Error "This script requires PowerShell 7 or later. Please install PowerShell 7+ (https://aka.ms/powershell) and try again."
+    exit 1
+}
+
 # check if the setup has already been done and ask if you want to force it 
 
 
