@@ -36,7 +36,7 @@ const rateLimit = createRateLimit(
 /**
  * OPTIONS handler for CORS preflight requests
  */
-router.options('/manifests_new*', (req, res) => {
+router.options('/manifests_new{*path}', (req, res) => {
   res.header({
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
