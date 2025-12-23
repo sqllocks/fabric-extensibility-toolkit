@@ -31,7 +31,7 @@ Each release note file follows the naming convention: `v{YYYY}.{MM}[.{P}].md`
 
 ## Latest Releases
 
-- **[v2025.12.1](2025/2025.12.1.md)** - Patch release with critical bug fixes, security improvements, and stability enhancements
+- **[v2025.12.1](2025/v2025.12.1.md)** - Patch release with critical bug fixes, security improvements, and stability enhancements
 - **[v2025.12](2025/v2025.12.md)** - Major toolkit enhancement with standardized base components and SCSS architecture
 
 
