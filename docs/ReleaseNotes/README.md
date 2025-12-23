@@ -28,3 +28,13 @@ Each release note file follows the naming convention: `v{YYYY}.{MM}[.{P}].md`
 - `v2025.11.md` - November 2025 release
 - `v2025.11.1.md` - November 2025 patch release 1
 - `v2026.01.md` - January 2026 release
+
+## Latest Releases
+
+- **[v2025.12.1](2025/v2025.12.1.md)** - Patch release with critical bug fixes, security improvements, and stability enhancements
+- **[v2025.12](2025/v2025.12.md)** - Major toolkit enhancement with standardized base components and SCSS architecture
+
+
+---
+
+For questions about the release process, see the internal documentation in `scripts/_internal/README.md`.

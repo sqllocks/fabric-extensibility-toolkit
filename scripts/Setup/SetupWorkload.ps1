@@ -37,7 +37,7 @@
     .\SetupWorkload.ps1 -WorkloadName "Org.MyWorkload"
     
 .EXAMPLE  
-    .\SetupWorkload.ps1 -WorkloadName "Org.MyWorkload" -FrontendAppId "12345678-1234-1234-1234-123456789012" -Force
+    .\SetupWorkload.ps1 -WorkloadName "Org.MyWorkload" -FrontendAppId "12345678-1234-1234-1234-123456789012" -Force $true
 
 .NOTES
     Run this script from the scripts/Setup directory
@@ -64,6 +64,12 @@ param (
     # The version of the workload, used for the manifest package
     [String]$WorkloadVersion = "1.0.0"
 )
+
+# Check for PowerShell 7+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Error "This script requires PowerShell 7 or later. Please install PowerShell 7+ (https://aka.ms/powershell) and try again."
+    exit 1
+}
 
 # check if the setup has already been done and ask if you want to force it 
 
@@ -127,7 +133,7 @@ if ((Test-Path $envDevFile) -and -not $Force) {
     Write-Host "This indicates the workload has already been set up."
     Write-Host "Use -Force parameter to overwrite existing configuration, or run SetupDevEnvironment.ps1 for development setup."
     Write-Host ""
-    Write-Host "To force setup: .\SetupWorkload.ps1 -WorkloadName '$WorkloadName' -Force"
+    Write-Host "To force setup: .\SetupWorkload.ps1 -WorkloadName '$WorkloadName' -Force $true"
     exit 0
 }
 
@@ -157,7 +163,14 @@ $itemNames = ""
 if (Test-Path $itemsDir) {
     $items = Get-ChildItem -Path $itemsDir -Directory
     if ($items) {
-        $itemNames = ($items | Select-Object -ExpandProperty Name) -join ","
+        $itemNames = ($items | ForEach-Object { 
+            $name = $_.Name
+            if ($name.EndsWith("Item")) {
+                $name.Substring(0, $name.Length - 4)
+            } else {
+                $name
+            }
+        }) -join ","
     }
 }
 

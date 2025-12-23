@@ -41,6 +41,7 @@
     "css-loader": "^6.5.1",
     "dotenv": "^16.4.5",
     "env-cmd": "^10.1.0",
+    "express-rate-limit": "^8.2.1",
     "html-webpack-plugin": "^5.5.0",
     "nuget-bin": "^4.0.0",
     "sass": "^1.79.3",
