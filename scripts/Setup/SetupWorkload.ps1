@@ -190,19 +190,16 @@ $environments = @{
         "{{FRONTEND_URL}}" = "http://localhost:60006/"
         "{{LOG_LEVEL}}" = "debug"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = "-dev"
-        "{{ENABLE_PLAYGROUND}}" = "true"
     }
     "test" = @{
         "{{FRONTEND_URL}}" = "https://test-fe.yourappdomain.com/"
         "{{LOG_LEVEL}}" = "info"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = "-test"
-        "{{ENABLE_PLAYGROUND}}" = "true"
     }
     "prod" = @{
         "{{FRONTEND_URL}}" = "https://prod-fe.yourappdomain.com/"
         "{{LOG_LEVEL}}" = "warn"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = ""
-        "{{ENABLE_PLAYGROUND}}" = "false"
     }
 }
 
