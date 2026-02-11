@@ -4,7 +4,7 @@
 
 This guide provides instructions for updating Microsoft Fabric workload configuration using the simplified .env-based system. The new system uses environment files as the single source of truth for all configuration.
 
-## 🏗️ **New Configuration Architecture**
+## 🏗️ Configuration Architecture
 
 ### Environment-Based Configuration
 - **Environment Files**: `Workload/.env.dev`, `.env.test`, `.env.prod` - Primary configuration source
@@ -19,7 +19,16 @@ This guide provides instructions for updating Microsoft Fabric workload configur
 
 ## Step 1: Update Environment Configuration
 
-### 1.1: Edit Environment Files
+### 1.1: Understand Environment File Generation
+
+**Automated Generation**: If you ran `SetupWorkload.ps1`, environment files were automatically generated:
+- **`.env.dev`** - Development configuration with localhost URLs and debug logging
+- **`.env.test`** - Staging configuration with staging URLs and info logging  
+- **`.env.prod`** - Production configuration with production URLs and warn logging
+
+**Template Source**: Files are generated from `Workload/.env.template` with placeholders replaced.
+
+### 1.2: Edit Environment Files
 
 Update the appropriate .env file in the `Workload/` directory:
 
@@ -31,6 +40,7 @@ ITEM_NAMES=HelloWorld,CustomItem
 FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
 FRONTEND_URL=http://localhost:60006/
 LOG_LEVEL=debug
+ENABLE_PLAYGROUND=true
 ```
 
 **For Staging** (`Workload/.env.test`):
@@ -41,6 +51,7 @@ ITEM_NAMES=HelloWorld,CustomItem
 FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
 FRONTEND_URL=https://your-staging-url.azurestaticapps.net/
 LOG_LEVEL=info
+ENABLE_PLAYGROUND=true
 ```
 
 **For Production** (`Workload/.env.prod`):
@@ -50,73 +61,8 @@ WORKLOAD_NAME=YourOrganization.YourWorkloadName
 ITEM_NAMES=HelloWorld,CustomItem
 FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
 FRONTEND_URL=https://your-production-url.azurestaticapps.net/
-# Update Workload Configuration - .env-Based System
-
-## Process Overview
-
-This guide provides instructions for updating Microsoft Fabric workload configuration using the simplified .env-based system. The configuration uses environment files as the single source of truth.
-
-## 🏗️ Configuration Architecture
-
-### Environment-Based Configuration
-
-- **Environment Files**: `Workload/.env.dev`, `.env.test`, `.env.prod` - Primary configuration source
-- **Templates**: `config/templates/` - Version-controlled templates with placeholders
-- **Generated Files**: `build/Manifest/` and `build/DevGateway/` - Auto-generated from templates
-
-### Key Benefits
-
-- **Simplicity**: Standard .env format familiar to all developers
-- **Environment Management**: Separate committed files for each deployment target
-- **Template Processing**: Placeholders like `{{WORKLOAD_NAME}}` replaced during generation
-- **Self-Contained**: All configuration lives with application code
-
-## Step 1: Update Environment Configuration
-
-### 1.1: Understand Environment File Generation
-
-**Automated Generation**: If you ran `SetupWorkload.ps1`, environment files were automatically generated:
-- **`.env.dev`** - Development configuration with localhost URLs and debug logging
-- **`.env.test`** - Staging configuration with staging URLs and info logging  
-- **`.env.prod`** - Production configuration with production URLs and warn logging
-
-**Template Source**: Files are generated from `config/templates/Workload/.env` with placeholders replaced.
-
-### 1.2: Edit Environment Files (Manual Updates)
-
-Update the appropriate .env file in the `Workload/` directory:
-
-**Development Configuration** (`Workload/.env.dev`):
-
-```bash
-WORKLOAD_VERSION=1.0.0
-WORKLOAD_NAME=YourOrganization.YourWorkloadName
-ITEM_NAMES=HelloWorld,CustomItem
-FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
-FRONTEND_URL=http://localhost:60006/
-LOG_LEVEL=debug
-```
-
-**Staging Configuration** (`Workload/.env.test`):
-
-```bash
-WORKLOAD_VERSION=1.0.0
-WORKLOAD_NAME=YourOrganization.YourWorkloadName
-ITEM_NAMES=HelloWorld,CustomItem
-FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
-FRONTEND_URL=https://your-staging-url.azurestaticapps.net/
-LOG_LEVEL=info
-```
-
-**Production Configuration** (`Workload/.env.prod`):
-
-```bash
-WORKLOAD_VERSION=1.0.0
-WORKLOAD_NAME=YourOrganization.YourWorkloadName
-ITEM_NAMES=HelloWorld,CustomItem
-FRONTEND_APPID=12345678-1234-1234-1234-123456789abc
-FRONTEND_URL=https://your-production-url.azurestaticapps.net/
 LOG_LEVEL=warn
+ENABLE_PLAYGROUND=false
 ```
 
 ### 1.2: Configuration Variables
