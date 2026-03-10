@@ -42,6 +42,7 @@ Replace development organization "Org" with your registered organization name:
 # Production:  ContosoInc.MyWorkload
 
 $ProductionWorkloadName = "YourOrganization.YourWorkloadName"
+
 ```
 
 **Files requiring updates:**
@@ -59,6 +60,7 @@ az ad app create --display-name "Your Workload Production App" --sign-in-audienc
 
 # Note the Application ID for use in build process
 $ProductionAADAppId = "your-production-app-id-here"
+
 ```
 
 **Required Entra App Configuration:**
@@ -77,6 +79,7 @@ WORKLOAD_NAME=YourOrganization.YourWorkloadName
 
 # Item names (comma-separated for multiple items)
 ITEM_NAMES=YourDefaultItem,YourSecondItem
+
 ```
 
 ## Step 2: Build Release Package
@@ -94,6 +97,7 @@ cd "path\to\Microsoft-Fabric-workload-development-sample"
   -WorkloadName "YourOrganization.YourWorkloadName" `
   -FrontendAppId "your-production-aad-app-id" `
   -WorkloadVersion "1.0.0"
+
 ```
 
 ### 2.2: Build Process Overview
@@ -119,6 +123,7 @@ release/
     ├── bundle.[hash].js.map         # Source maps
     ├── assets/                      # Static assets
     └── web.config                   # IIS configuration
+
 ```
 
 **Key Files:**
@@ -145,6 +150,7 @@ az staticwebapp create `
   --branch "main" `
   --app-location "/" `
   --output-location "/"
+
 ```
 
 #### Option B: Using Azure Portal
@@ -171,6 +177,7 @@ az staticwebapp environment set `
   --name "swa-your-workload" `
   --resource-group "rg-your-workload" `
   --source "path/to/release/app"
+
 ```
 
 #### Deployment via GitHub Actions (Recommended)
@@ -216,6 +223,7 @@ jobs:
           action: "upload"
           app_location: "/release/app"
           output_location: "/"
+
 ```
 
 ### 3.3: Configure Static Web App Settings
@@ -248,6 +256,7 @@ Create `staticwebapp.config.json` in the release/app directory:
     "content-security-policy": "frame-ancestors 'self' https://*.analysis.windows-int.net https://*.analysis-df.windows.net https://*.powerbi.com https://teams.microsoft.com https://*.fabric.microsoft.com"
   }
 }
+
 ```
 
 #### Environment Variables
@@ -260,6 +269,7 @@ az staticwebapp appsettings set `
   --name "swa-your-workload" `
   --resource-group "rg-your-workload" `
   --setting-names "WORKLOAD_NAME=YourOrganization.YourWorkloadName"
+
 ```
 
 ### 3.4: Update Workload Manifest with Production URL
@@ -273,12 +283,14 @@ Update the workload manifest to point to your Azure Static Web App:
   <Url>https://your-static-web-app.azurestaticapps.net/</Url>
   <IsEndpointResolutionService>false</IsEndpointResolutionService>
 </ServiceEndpoint>
+
 ```
 
 Rebuild the manifest package:
 
 ```powershell
 .\scripts\Build\BuildManifestPackage.ps1
+
 ```
 
 ## Step 4: Publish Workload Manifest to Fabric
@@ -326,6 +338,7 @@ Invoke-RestMethod -Uri "https://api.fabric.microsoft.com/v1/workloads" `
   -Method POST `
   -Headers $headers `
   -InFile "release/ManifestPackage.1.0.0.nupkg"
+
 ```
 
 ### 4.3: Validate Workload Registration
@@ -348,12 +361,14 @@ After deployment, verify the workload is properly registered:
 ### 5.1: Configure Monitoring
 
 #### Azure Static Web Apps Monitoring
+
 ```powershell
 # Enable Application Insights
 az staticwebapp appsettings set `
   --name "swa-your-workload" `
   --resource-group "rg-your-workload" `
   --setting-names "APPINSIGHTS_INSTRUMENTATIONKEY=your-app-insights-key"
+
 ```
 
 #### Fabric Workload Monitoring
@@ -415,15 +430,18 @@ az staticwebapp appsettings set `
 ### Production Environment Commands
 
 #### Build for Production
+
 ```powershell
 # Complete production build
 .\scripts\Build\BuildRelease.ps1 `
   -WorkloadName "YourOrg.YourWorkload" `
   -FrontendAppId "prod-app-id" `
   -WorkloadVersion "1.0.0"
+
 ```
 
 #### Deploy to Azure Static Web Apps
+
 ```powershell
 # Create and deploy in one command
 az staticwebapp create `
@@ -431,15 +449,18 @@ az staticwebapp create `
   --resource-group "rg-workloads" `
   --location "eastus" `
   --source "./release/app"
+
 ```
 
 #### Update Production Deployment
+
 ```powershell
 # Redeploy after changes
 az staticwebapp environment set `
   --name "swa-your-workload" `
   --resource-group "rg-workloads" `
   --source "./release/app"
+
 ```
 
 ### Troubleshooting Production Deployment

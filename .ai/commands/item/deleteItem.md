@@ -30,6 +30,7 @@ Workload/app/items/[ItemName]Item/
 ├── [ItemName]ItemEditor.tsx
 ├── [ItemName]ItemEditorEmptyView.tsx
 └── [ItemName]ItemEditorRibbon.tsx
+
 ```
 
 **Important**: 
@@ -76,6 +77,7 @@ Update `Workload/Manifest/assets/locales/*/translations.json` files:
   // "[ItemName]Item_DisplayName_Plural": "...",
   // "[ItemName]Item_Description": "..."
 }
+
 ```
 
 **For All Locales**:
@@ -95,6 +97,7 @@ Update `Workload/app/App.tsx` to remove the route:
 // <Route path="/[ItemName]Item-editor/:itemObjectId">
 //   <[ItemName]ItemEditor {...pageProps} />
 // </Route>
+
 ```
 
 **Cleanup Steps**:

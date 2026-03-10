@@ -141,3 +141,8 @@ For complete understanding, GitHub Copilot users should reference:
 - **Live Workspace**: Current implementation patterns and recent changes
 
 This dual approach ensures consistency across all AI tools while providing GitHub Copilot users with enhanced, context-aware development assistance.
+
+## Response Guidelines
+- Add a timestamp (format: `YYYY-MM-DD HH:MM UTC`) at the end of each response
+- Clean up unsuccessful code attempts immediately when finding the correct solution
+- Only leave changes that actually contribute to the working solution

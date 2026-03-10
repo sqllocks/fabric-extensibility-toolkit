@@ -29,9 +29,9 @@ Any use of third-party trademarks or logos are subject to those third-party's po
 
 ## Latest Release
 
-📋 **[v2025.11 - Standardized Base Components](docs/ReleaseNotes/2025/v2025.11.md)**
+📋 **[v2026.03 - Remote Hosting & Job Scheduling](docs/ReleaseNotes/2026/v2026.03.md)**
 
-This release introduces comprehensive standardized base components, SCSS architecture improvements, and enhanced HelloWorld reference implementation. [View all release notes →](docs/ReleaseNotes/)
+This release introduces major enhancements for remote workload hosting, comprehensive job scheduling capabilities, and improved operational APIs. The update focuses on production-ready remote hosting features, making it easier for workload developers to deploy and manage Fabric workloads at scale. [View all release notes →](docs/ReleaseNotes/)
 
 ## Introduction
 

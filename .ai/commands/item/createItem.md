@@ -38,6 +38,7 @@ Before writing ANY code, create a comprehensive todo list with `manage_todo_list
 - "ItemEditorView left right split layout"
 - "ItemEditorDetailView left center" 
 - "Base* components [your use case]"
+
 ```
 
 **Available Components (USE THESE - DON'T REINVENT):**
@@ -72,6 +73,7 @@ Before writing ANY code, create a comprehensive todo list with `manage_todo_list
 - ✅ Built-in accessibility and responsive behavior
 
 **Example Usage Pattern:**
+
 ```tsx
 // In your views registration
 {
@@ -95,6 +97,7 @@ Before writing ANY code, create a comprehensive todo list with `manage_todo_list
   ),
   isDetailView: true  // ⭐ This enables automatic back navigation
 }
+
 ```
 
 ### 🔄 Execution Rules (MANDATORY)
@@ -152,6 +155,7 @@ export function [ItemName]ItemEditor(props: PageProps) {
     </ItemEditor>
   );
 }
+
 ```
 
 ### ❌ INCORRECT Patterns - DO NOT USE
@@ -174,6 +178,7 @@ export function [ItemName]ItemEditor(props: PageProps) {
 <div style={{height: '100vh', overflow: 'scroll'}}>
   {/* ItemEditor handles this */}
 </div>
+
 ```
 
 ### Key Benefits of Standard Architecture
@@ -236,6 +241,7 @@ export function [ItemName]ItemEditor(props: PageProps) {
    - ✅ Import pattern: `import "./[ItemName]Item.scss";` (no global imports)
 
 **❌ STYLE VIOLATIONS** (Will fail verification):
+
 ```scss
 // ❌ WRONG: Modifying control files
 // components/ItemEditor/ItemEditor.scss
@@ -258,6 +264,7 @@ export function [ItemName]ItemEditor(props: PageProps) {
   flex-direction: column;  // ❌ components handle their own structure
   background: blue;        // ✅ Only item-specific styles like this
 }
+
 ```
 
 ---
@@ -301,6 +308,7 @@ export interface [ItemName]ItemDefinition {
   // description?: string;
   // configuration?: any;
 }
+
 ```
 
 **Key Points**:
@@ -513,6 +521,7 @@ export function [ItemName]ItemEditor(props: PageProps) {
     />
   );
 }
+
 ```
 
 **🚨 CRITICAL Architecture Requirements**:
@@ -613,6 +622,7 @@ export function [ItemName]ItemEmptyView({
     />
   );
 }
+
 ```
 
 **🚨 CRITICAL Requirements**:
@@ -770,6 +780,7 @@ export const [ItemName]ItemDefaultView: React.FC<[ItemName]ItemDefaultViewProps>
     </div>
   );
 };
+
 ```
 
 **Key Features**:
@@ -800,6 +811,7 @@ const itemWrapper = oneLakeClient.createItemWrapper({
 await itemWrapper.writeFileAsBase64('Files/myfile.txt', base64Content);
 const content = await itemWrapper.readFileAsText('Files/myfile.txt');
 const fullPath = itemWrapper.getPath('Files/myfile.txt'); // For storage in definitions
+
 ```
 
 #### ❌ **WRONG Pattern** - Direct client with manual paths:
@@ -809,6 +821,7 @@ const fullPath = itemWrapper.getPath('Files/myfile.txt'); // For storage in defi
 const oneLakeClient = new OneLakeStorageClient(props.workloadClient);
 const filePath = `${props.item.id}/Files/myfile.txt`; // Manual path construction
 await oneLakeClient.writeFileAsBase64(filePath, base64Content);
+
 ```
 
 #### **Key Benefits of Wrapper Pattern:**
@@ -855,6 +868,7 @@ import { OneLakeView } from '../../../components/OneLakeView';
     }
   }}
 />
+
 ```
 
 #### ❌ **WRONG Pattern** - Don't copy from samples:
@@ -866,6 +880,7 @@ import { OneLakeViewComponent } from '../../../samples/views/SampleOneLakeView';
 
 // ❌ This is a sample wrapper, not the reusable control
 <OneLakeViewComponent ... />
+
 ```
 
 #### ❌ **WRONG Pattern** - Missing configuration:
@@ -881,6 +896,7 @@ import { OneLakeViewComponent } from '../../../samples/views/SampleOneLakeView';
   }}
   callbacks={{}}
 />
+
 ```
 
 #### **Key Points:**
@@ -994,6 +1010,7 @@ export function [ItemName]ItemRibbon(props: [ItemName]ItemRibbonProps) {
     </Ribbon>
   );
 }
+
 ```
 
 **🚨 CRITICAL Architecture Requirements**:
@@ -1046,6 +1063,7 @@ return (
 
 // ❌ WRONG: Creating custom action factories
 export function createCustomSaveAction() { ... }  // Use standard factories instead
+
 ```
 
 **✅ CORRECT Pattern**:
@@ -1064,6 +1082,7 @@ return (
     <RibbonToolbar actions={actions} />
   </Ribbon>
 );
+
 ```
 
 **Key Benefits**:
@@ -1112,6 +1131,7 @@ return (
 }
 
 // Add other item-specific styles here - NO CONTROL MODIFICATIONS
+
 ```
 
 **Import Pattern in Components**:
@@ -1119,6 +1139,7 @@ return (
 ```tsx
 // In [ItemName]ItemEditor.tsx, [ItemName]ItemDefaultView.tsx, [ItemName]ItemRibbon.tsx, etc.
 import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
+
 ```
 
 **Usage Pattern**:
@@ -1130,6 +1151,7 @@ import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
     {/* Item-specific styling and content */}
   </div>
 </div>
+
 ```
 
 **✅ DO** (Will pass verification):
@@ -1159,6 +1181,7 @@ import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
     <Workload WorkloadName="{{WORKLOAD_NAME}}" />
   </Item>
 </ItemManifestConfiguration>
+
 ```
 
 **Key Elements**:
@@ -1210,6 +1233,7 @@ import "./[ItemName]Item.scss";       // Item-specific styles (REQUIRED)
     "onCreationSuccess": { "action": "item.onCreationSuccess" }
   }
 }
+
 ```
 
 **Key Properties**:
@@ -1232,6 +1256,7 @@ import { [ItemName]ItemEditor } from "./items/[ItemName]Item/[ItemName]ItemEdito
 <Route path="/[ItemName]Item-editor/:itemObjectId">
   <[ItemName]ItemEditor {...pageProps} />
 </Route>
+
 ```
 
 **Route Pattern**:
@@ -1253,10 +1278,12 @@ Create an icon file: `Workload/Manifest/assets/images/[ItemName]Item-icon.png`
 Create an empty state illustration: `Workload/app/assets/items/[ItemName]Item/EditorEmpty.svg`
 
 **Folder Structure**:
+
 ```
 Workload/app/assets/items/
 └── [ItemName]Item/
     └── EditorEmpty.svg
+
 ```
 
 **Requirements**:
@@ -1283,6 +1310,7 @@ Update `Workload/Manifest/assets/locales/en-US/translations.json`:
   "[ItemName]Item_DisplayName_Plural": "Your Item Display Names",
   "[ItemName]Item_Description": "Description of what this item does"
 }
+
 ```
 
 **For React Components (App code with useTranslation() ONLY)**:
@@ -1298,6 +1326,7 @@ Update `Workload/app/assets/locales/en-US/translation.json`:
   "[ItemName]ItemRibbon_Save_Label": "Save",
   "[ItemName]ItemRibbon_Settings_Label": "Settings"
 }
+
 ```
 
 **Key Differences**:
@@ -1353,6 +1382,7 @@ The `createExperience.cards` array controls what items appear in Fabric's "Creat
     ]
   }
 }
+
 ```
 
 **Step 8.4.2 - Add to recommendedItemTypes array**:
@@ -1368,6 +1398,7 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
     ]
   }
 }
+
 ```
 
 **⚠️ CRITICAL Requirements**:
@@ -1380,6 +1411,7 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
 - **Both Arrays Required**: Items need to be in BOTH `createExperience.cards` AND `recommendedItemTypes`
 
 **❌ Common Mistakes - DO NOT DO THIS**:
+
 ```json
 // WRONG: Missing createExperience.cards entry
 {
@@ -1403,9 +1435,11 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
     "recommendedItemTypes": ["MyItem"]            // ← Different from createExperience
   }
 }
+
 ```
 
 **✅ Correct Pattern - ALWAYS DO THIS**:
+
 ```json
 {
   "createExperience": {
@@ -1422,6 +1456,7 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
     "recommendedItemTypes": ["[ItemName]"]         // ← Matches itemType above
   }
 }
+
 ```
 
 **Validation Checklist**:
@@ -1497,6 +1532,7 @@ The `recommendedItemTypes` array controls which items appear on the workload hom
 **For AI Tools**: Instead of creating empty files, copy and modify the existing HelloWorld item:
 
 ### 1. Copy HelloWorld Item Structure
+
 ```bash
 # Copy the entire HelloWorld item implementation
 cp -r Workload/app/items/[ItemName]Item
@@ -1506,6 +1542,7 @@ cp -r Workload/Manifest/items/[ItemName]Item
 ```
 
 ### 2. Find and Replace Pattern
+
 ```bash
 # Replace all instances in the copied files:
 HelloWorld → [ItemName]
@@ -1515,9 +1552,11 @@ HelloWorldItemEditor → [ItemName]ItemEditor
 HelloWorldItemEmptyView → [ItemName]ItemEmptyView
 HelloWorldItemDefaultView → [ItemName]ItemDefaultView
 HelloWorldItemRibbon → [ItemName]ItemRibbon
+
 ```
 
 ### 3. Update File Names
+
 ```bash
 # Rename all files to match the new item name
 mv [ItemName]Item/HelloWorldItemDefinition.ts [ItemName]Item/[ItemName]ItemDefinition.ts
@@ -1526,6 +1565,7 @@ mv [ItemName]Item/HelloWorldItemEmptyView.tsx [ItemName]Item/[ItemName]ItemEmpty
 mv [ItemName]Item/HelloWorldItemDefaultView.tsx [ItemName]Item/[ItemName]ItemDefaultView.tsx
 mv [ItemName]Item/HelloWorldItemRibbon.tsx [ItemName]Item/[ItemName]ItemRibbon.tsx
 # Continue for all files...
+
 ```
 
 This approach ensures you get a **complete, functional item** rather than empty file structures.
@@ -1592,6 +1632,7 @@ When creating a new item, ensure all these components are created:
 **MANDATORY: Before claiming ANY item creation is complete, verify EVERY item below:**
 
 ### 📁 All Files Exist and Are Syntactically Correct
+
 ```bash
 # Verify these files exist:
 ls Workload/app/items/[ItemName]Item/[ItemName]ItemDefinition.ts
@@ -1603,24 +1644,29 @@ ls Workload/app/items/[ItemName]Item/[ItemName]Item.scss
 ls Workload/Manifest/items/[ItemName]Item/[ItemName]Item.json
 ls Workload/Manifest/items/[ItemName]Item/[ItemName]Item.xml
 ls Workload/Manifest/assets/images/[ItemName]Item-icon.png
+
 ```
 
 ### 🚨 CRITICAL: Product.json Updated (MOST MISSED STEP)
+
 ```bash
 # Verify both these entries exist in Product.json:
 grep -n "[ItemName]" Workload/Manifest/Product.json
 # Should show entries in BOTH:
 # - createExperience.cards array
 # - recommendedItemTypes array
+
 ```
 
 ### ✅ Translations in Correct Locations
+
 ```bash
 # Manifest translations (for .json files):
 grep "[ItemName]Item_DisplayName" Workload/Manifest/assets/locales/en-US/translations.json
 
 # App translations (for React components):
 grep "[ItemName]Item" Workload/app/assets/locales/en-US/translation.json
+
 ```
 
 ### 🏗️ Architecture Compliance

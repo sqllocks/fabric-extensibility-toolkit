@@ -23,33 +23,41 @@ The workload runs using two components:
 ### Step 1: Prepare the Environment
 
 #### 1.1: Navigate to Project Root
+
 ```powershell
 cd "c:\Dev\Fabric\Extensibility\Microsoft-Fabric-workload-development-sample"
+
 ```
 
 #### 1.2: Install Dependencies (if not already done)
+
 ```powershell
 cd Workload
 npm install
 cd ..
+
 ```
 
 #### 1.3: Verify Configuration
 Check that the development configuration file exists and is properly configured:
+
 ```powershell
 # Verify DevGateway configuration exists
 Test-Path "config\DevGateway\workload-dev-mode.json"
 
 # Check workspace configuration
 Get-Content "config\DevGateway\workload-dev-mode.json"
+
 ```
 
 **Expected Configuration Structure:**
+
 ```json
 {  
     "WorkspaceGuid": "your-workspace-id-here",
     "ManifestPackageFilePath": "path-to-manifest-package.nupkg"
 }
+
 ```
 
 ### Step 2: Start the Development Gateway
@@ -57,8 +65,10 @@ Get-Content "config\DevGateway\workload-dev-mode.json"
 The Development Gateway must be started first as it handles the connection to Fabric.
 
 #### 2.1: Run the StartDevGateway Script
+
 ```powershell
 .\scripts\Run\StartDevGateway.ps1
+
 ```
 
 **What this script does:**
@@ -97,12 +107,14 @@ Once the Development Gateway is running, start the frontend development server.
 Keep the DevGateway terminal open and start a new session for the DevServer.
 
 #### 3.2: Run the StartDevServer Script
+
 ```powershell
 # Navigate to project root in new terminal
 cd "c:\Dev\Fabric\Extensibility\Microsoft-Fabric-workload-development-sample"
 
 # Start the development server
 .\scripts\Run\StartDevServer.ps1
+
 ```
 
 **What this script does:**
@@ -137,8 +149,10 @@ Look for these indicators:
 
 #### 4.1: Browser Access
 The workload should automatically open in your browser. If not, navigate to:
+
 ```
 http://localhost:[dev-server-port]
+
 ```
 
 #### 4.2: Fabric Integration Access
@@ -187,6 +201,7 @@ Keep both terminal windows visible to monitor:
 For simplified development, you can also use the npm scripts directly from the Workload directory:
 
 #### Option A: Start Both Services Separately
+
 ```powershell
 # Terminal 1: Start DevGateway
 cd Workload
@@ -195,12 +210,15 @@ npm run start:devGateway
 # Terminal 2: Start DevServer  
 cd Workload
 npm run start:devServer
+
 ```
 
 #### Option B: Start DevServer Only (if DevGateway already running)
+
 ```powershell
 cd Workload
 npm start
+
 ```
 
 ## Usage
@@ -234,27 +252,33 @@ When starting a workload, follow this checklist:
 ### Environment-Specific Commands
 
 #### Local Development Environment
+
 ```powershell
 # Start DevGateway with interactive login
 .\scripts\Run\StartDevGateway.ps1
 
 # Start DevServer with full performance
 .\scripts\Run\StartDevServer.ps1
+
 ```
 
 #### GitHub Codespaces Environment
+
 ```powershell
 # Start DevGateway with device code auth
 .\scripts\Run\StartDevGateway.ps1 -InteractiveLogin $false
 
 # DevServer will automatically use codespace configuration
 .\scripts\Run\StartDevServer.ps1
+
 ```
 
 #### Automated/CI Environment
+
 ```powershell
 # Non-interactive DevGateway startup
 .\scripts\Run\StartDevGateway.ps1 -InteractiveLogin $false
+
 ```
 
 ### Troubleshooting Common Issues

@@ -44,7 +44,7 @@ router.options('/manifests_new{*path}', (req, res) => {
     'Access-Control-Max-Age': '86400' // 24 hours
   });
   res.sendStatus(204); // No content needed for OPTIONS response
-  console.log("Handled CORS preflight request for manifest endpoint.");
+  console.log("[Frontend] Handled CORS preflight request for manifest endpoint.");
 });
 
 /**
@@ -58,19 +58,24 @@ router.get('/manifests_new/metadata', rateLimit, (req, res) => {
     'Access-Control-Allow-Methods': 'GET',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   });
-
+ 
   const devParameters = {
     name: process.env.WORKLOAD_NAME,
     url: "http://127.0.0.1:60006",
     devAADFEAppConfig: {
       appId: process.env.DEV_AAD_CONFIG_FE_APPID,
     },
+    devAADAppConfig: {
+      appId: process.env.DEV_AAD_CONFIG_BE_APPID,
+      audience: process.env.DEV_AAD_CONFIG_BE_AUDIENCE,
+      redirectUri: process.env.DEV_AAD_CONFIG_REDIRECT_URI
+    },
     //If you enable Sandbox Relaxation, make sure to also enable it in the manifest package and vica versa.
     devSandboxRelaxation: false
   };
-
+ 
   res.end(JSON.stringify({ extension: devParameters }));
-  console.log("Delivered manifest metainformation successfully.");
+  console.log("[Frontend] Delivered manifest metainformation successfully.");
 });
 
 /**
@@ -93,7 +98,7 @@ router.get('/manifests_new', rateLimit, async (req, res) => {
     });
 
     res.sendFile(filePath);
-    console.log("Delivered manifest package successfully.");
+    console.log("[Frontend] Delivered manifest package successfully.");
   } catch (err) {
     console.error(`❌ Error: ${err.message}`);
     res.status(500).json({

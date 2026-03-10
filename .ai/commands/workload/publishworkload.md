@@ -57,6 +57,7 @@ Ensure your workload manifest uses the registered Workload ID:
     <Version>1.0.0</Version>
     <!-- Additional configuration -->
 </Workload>
+
 ```
 
 #### 1.2: Build Production Package
@@ -65,6 +66,7 @@ Use the build script to create the manifest package:
 
 ```powershell
 .\scripts\Build\BuildManifestPackage.ps1 -ValidateFiles $true
+
 ```
 
 **Verify Package Contents:**
