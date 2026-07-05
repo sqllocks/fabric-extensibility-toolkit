@@ -1,0 +1,36 @@
+{
+  "name": "Incident",
+  "version": "1.100",
+  "displayName": "IncidentItem_DisplayName",
+  "displayNamePlural": "IncidentItem_DisplayName_Plural",
+  "editor": {
+    "path": "/IncidentItem-editor"
+  },
+  "icon": {
+    "name": "assets/images/IncidentItem_Icon.png"
+  },
+  "activeIcon": {
+    "name": "assets/images/IncidentItem_Icon.png"
+  },
+  "contextMenuItems": [],
+  "quickActionItems": [],
+  "supportedInMonitoringHub": true,
+  "supportedInDatahubL1": true,
+  "editorTab": {
+    "onDeactivate": "item.tab.onDeactivate",
+    "canDeactivate": "item.tab.canDeactivate",
+    "canDestroy": "item.tab.canDestroy",
+    "onDestroy": "item.tab.onDestroy",
+    "onDelete": "item.tab.onDelete"
+  },
+  "createItemDialogConfig": {
+    "onCreationFailure": {
+      "action": "item.onCreationFailure"
+    },
+    "onCreationSuccess": {
+      "action": "item.onCreationSuccess"
+    }
+  }
+}
+
+

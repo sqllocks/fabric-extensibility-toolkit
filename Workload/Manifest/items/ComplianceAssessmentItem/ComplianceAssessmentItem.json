@@ -1,0 +1,36 @@
+{
+  "name": "ComplianceAssessment",
+  "version": "1.100",
+  "displayName": "ComplianceAssessmentItem_DisplayName",
+  "displayNamePlural": "ComplianceAssessmentItem_DisplayName_Plural",
+  "editor": {
+    "path": "/ComplianceAssessmentItem-editor"
+  },
+  "icon": {
+    "name": "assets/images/ComplianceAssessmentItem_Icon.png"
+  },
+  "activeIcon": {
+    "name": "assets/images/ComplianceAssessmentItem_Icon.png"
+  },
+  "contextMenuItems": [],
+  "quickActionItems": [],
+  "supportedInMonitoringHub": true,
+  "supportedInDatahubL1": true,
+  "editorTab": {
+    "onDeactivate": "item.tab.onDeactivate",
+    "canDeactivate": "item.tab.canDeactivate",
+    "canDestroy": "item.tab.canDestroy",
+    "onDestroy": "item.tab.onDestroy",
+    "onDelete": "item.tab.onDelete"
+  },
+  "createItemDialogConfig": {
+    "onCreationFailure": {
+      "action": "item.onCreationFailure"
+    },
+    "onCreationSuccess": {
+      "action": "item.onCreationSuccess"
+    }
+  }
+}
+
+
