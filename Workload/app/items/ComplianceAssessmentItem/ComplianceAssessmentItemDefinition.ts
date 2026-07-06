@@ -1,9 +1,12 @@
 
-/***
- * Interface representing the definition of a ComplianceAssessment item.
- * This information is stored in Fabric as Item definition. 
- * It will be returned once the item definition is loaded.
+/**
+ * Definition of a Compliance Assessment item, stored in Fabric's own
+ * item-definition storage. Per the confirmed per-record design, one Fabric
+ * item binds to exactly one compliance_assessments.id. SM's backend sets
+ * smAssessmentId when it creates this Fabric item (SM generates assessments
+ * from its own compliance engine; the item is never created by a user in
+ * the Fabric portal first).
  */
-export interface ComplianceAssessmentItemDefinition  {
-  message?: string;
+export interface ComplianceAssessmentItemDefinition {
+  smAssessmentId?: string;
 }

@@ -393,3 +393,50 @@
   }
 }
 
+
+/* Real compliance assessment view (replaces the HelloWorld message-editing layout). */
+.compliance-detail-view {
+  padding: var(--spacingVerticalL, 16px) var(--spacingHorizontalL, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacingVerticalM, 12px);
+}
+.compliance-detail-card, .compliance-controls-card {
+  padding: var(--spacingVerticalM, 12px) var(--spacingHorizontalM, 12px);
+}
+.compliance-detail-badges {
+  display: flex;
+  gap: var(--spacingHorizontalS, 8px);
+  margin: var(--spacingVerticalS, 8px) 0;
+}
+.compliance-detail-row {
+  display: flex;
+  flex-direction: column;
+}
+.compliance-detail-label {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.compliance-detail-value {
+  font-weight: 600;
+}
+.compliance-controls-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacingVerticalXS, 4px);
+}
+.compliance-control-row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto 60px;
+  align-items: center;
+  gap: var(--spacingHorizontalS, 8px);
+  padding: var(--spacingVerticalXS, 4px) 0;
+  border-bottom: 1px solid var(--colorNeutralStroke2, #e0e0e0);
+}
+.compliance-control-id {
+  font-weight: 600;
+  font-size: 12px;
+}
+.compliance-control-score {
+  text-align: right;
+}

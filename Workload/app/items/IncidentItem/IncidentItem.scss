@@ -393,3 +393,35 @@
   }
 }
 
+
+/* Real incident data view (replaces the HelloWorld message-editing layout). */
+.incident-detail-view {
+  padding: var(--spacingVerticalL, 16px) var(--spacingHorizontalL, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacingVerticalM, 12px);
+}
+.incident-detail-card {
+  padding: var(--spacingVerticalM, 12px) var(--spacingHorizontalM, 12px);
+}
+.incident-detail-badges {
+  display: flex;
+  gap: var(--spacingHorizontalS, 8px);
+  margin: var(--spacingVerticalS, 8px) 0;
+}
+.incident-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacingVerticalS, 8px) var(--spacingHorizontalM, 12px);
+}
+.incident-detail-row {
+  display: flex;
+  flex-direction: column;
+}
+.incident-detail-label {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.incident-detail-value {
+  font-weight: 600;
+}

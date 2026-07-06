@@ -1,59 +1,17 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
-import { WorkloadClientAPI } from "@ms-fabric/workload-client";
-import { ItemWithDefinition } from "../../controller/ItemCRUDController";
-import { callNavigationOpenInNewBrowserTab } from "../../controller/NavigationController";
-import { IncidentItemDefinition } from "./IncidentItemDefinition";
 import { ItemEditorDefaultView } from "../../components/ItemEditor";
-import { GettingStartedSection } from "./GettingStartedSection";
-import { ItemDetailsSection } from "./ItemDetailsSection";
+import { ItemDetailsSection, IncidentDetail } from "./ItemDetailsSection";
 import "./IncidentItem.scss";
 
 interface IncidentItemDefaultViewProps {
-  workloadClient: WorkloadClientAPI;
-  item?: ItemWithDefinition<IncidentItemDefinition>;
-  messageValue?: string;
-  onMessageChange?: (newValue: string) => void;
+  incident: IncidentDetail;
 }
 
-export function IncidentItemDefaultView({
-  workloadClient,
-  item,
-  messageValue,
-  onMessageChange,
-}: IncidentItemDefaultViewProps) {
-  const { t } = useTranslation();
-
-  const handleOpenResource = async (url: string) => {
-    try {
-      // Demonstrate external navigation API
-      await callNavigationOpenInNewBrowserTab(workloadClient, url);
-    } catch (error) {
-      // Log the error
-      console.error('Failed to open resource via Fabric navigation API:', error);
-    }
-  };
-
+export function IncidentItemDefaultView({ incident }: IncidentItemDefaultViewProps) {
   return (
     <ItemEditorDefaultView
-      //Add left control if you want to split the center content in the editor
-      left={{
-        content: <GettingStartedSection onOpenResource={handleOpenResource} />,
-        width: 400,
-        minWidth: 350,
-        title: t('Item_GettingStarted_Label', 'Next Steps'),
-        enableUserResize: true,
-        collapsible: true
-      }}
       center={{
-         content: (
-          <ItemDetailsSection
-            item={item}
-            messageValue={messageValue}
-            onMessageChange={onMessageChange}
-            onOpenResource={handleOpenResource}
-          />
-        )
+        content: <ItemDetailsSection incident={incident} />,
       }}
     />
   );

@@ -1,53 +1,39 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-
-import { WorkloadClientAPI } from "@ms-fabric/workload-client";
-import { ItemWithDefinition } from "../../controller/ItemCRUDController";
-import { IncidentItemDefinition } from "./IncidentItemDefinition";
-import { ItemEditorEmptyView, EmptyStateTask } from "../../components/ItemEditor";
+import { ItemEditorEmptyView } from "../../components/ItemEditor";
 import "./IncidentItem.scss";
 
 interface IncidentItemEmptyViewProps {
-  workloadClient: WorkloadClientAPI;
-  item?: ItemWithDefinition<IncidentItemDefinition>;
-  onNavigateToGettingStarted: () => void;
+  /** Set when the item has no smIncidentId yet, or when the SM API fetch failed. */
+  reason: "not-linked" | "fetch-failed";
+  detail?: string;
 }
 
 /**
- * Empty state component - the first screen users see
- * This is a static page that can be easily removed or replaced by developers
- * 
- * To skip this page, modify IncidentItemEditor.tsx line 25,55
- * to always set currentView to 'getting-started'
- * 
- * This component uses the ItemEditorEmptyView control for consistency
- * across all item types.
+ * Shown when this Fabric item is not (yet) bound to a Sound Management
+ * incident, or the fetch to SM's API failed. Incidents are discovered and
+ * created by SM's own monitoring, never authored by a user in the Fabric
+ * portal, so there is no "create/getting started" flow here - only these
+ * two failure states.
  */
-export function IncidentItemEmptyView({
-  workloadClient,
-  item,
-  onNavigateToGettingStarted
-}: IncidentItemEmptyViewProps) {
+export function IncidentItemEmptyView({ reason, detail }: IncidentItemEmptyViewProps) {
   const { t } = useTranslation();
 
-  // Define onboarding tasks
-  const tasks: EmptyStateTask[] = [
-    {
-      id: 'getting-started',
-      label: t('IncidentItemEmptyView_StartButton', 'Getting Started'),
-      icon: undefined,
-      description: t('IncidentItemEmptyView_StartButton_Description', 'Learn how to set up your Incident item.'),
-      onClick: onNavigateToGettingStarted,
-    }
-  ];
+  const title = reason === "not-linked"
+    ? t('IncidentItemEmptyView_NotLinked_Title', 'Not yet linked to Sound Management')
+    : t('IncidentItemEmptyView_FetchFailed_Title', 'Could not load incident data');
+
+  const description = reason === "not-linked"
+    ? t('IncidentItemEmptyView_NotLinked_Description', 'This item has no bound incident. Sound Management creates and binds these items automatically when it detects a new incident.')
+    : (detail ?? t('IncidentItemEmptyView_FetchFailed_Description', 'The request to Sound Management\'s API did not succeed.'));
 
   return (
     <ItemEditorEmptyView
-      title={t('IncidentItemEmptyView_Title', 'Welcome to Incident!')}
-      description={t('IncidentItemEmptyView_Description', 'This is the first screen people will see after an item is created. Include some basic information to help them continue.')}
+      title={title}
+      description={description}
       imageSrc="/assets/items/IncidentItem/EditorEmpty.svg"
       imageAlt="Empty state illustration"
-      tasks={tasks}
+      tasks={[]}
     />
   );
 }
