@@ -22,37 +22,16 @@
         "customActions": [
         ]},
         "recommendedItemTypes": [
-          "HelloWorld"
+          "Incident",
+          "ComplianceAssessment"
         ]
     },
     "createExperience": {
       "description": "Workload_Description",
-      "cards": [
-        {
-          "title": "HelloWorldItem_DisplayName",
-          "description": "HelloWorldItem_Description",
-          "icon": {
-            "name": "assets/images/HelloWorldItem_Icon.png"
-          },
-          "icon_small": {
-            "name": "assets/images/HelloWorldItem_Icon.png"
-          },
-          "availableIn": [
-            "home",
-            "create-hub",
-            "workspace-plus-new",
-            "workspace-plus-new-teams"
-          ],
-          "itemType": "HelloWorld",
-          "createItemDialogConfig": {
-            "onCreationFailure": { "action": "item.onCreationFailure" },
-            "onCreationSuccess": { "action": "item.onCreationSuccess" }
-          }
-        }
-      ]
+      "cards": []
     },
     "productDetail": {
-      "publisher": "Name of publisher",
+      "publisher": "Sound BI",
       "slogan": "Workload_Hub_Slogan",
       "description": "Workload_Hub_Description",
       "image": {
@@ -61,21 +40,17 @@
       },
       "slideMedia": [
         {
-          "mediaType": 1,
-          "source": "https://youtube.com/embed/UNgpBOCvwa8?si=KwsR879MaVZd5CJi"
-        },
-        {
           "mediaType": 0,
           "source": "assets/images/Workload_Hub_SlideMedia_1.png"
         }
       ],
         "supportLink": {
-          "documentation": {"url": "https://example.com/documentation"},
-          "certification": {"url": "https://example.com/certification"},
-          "help": {"url": "https://example.com/help"},
-          "privacy": {"url": "https://example.com/privacy"},
-          "terms": {"url": "https://example.com/terms"},
-          "license": {"url": "https://azuremarketplace.microsoft.com"} 
+          "documentation": {"url": "https://soundbi.com/"},
+          "certification": {"url": "https://soundbi.com/"},
+          "help": {"url": "https://soundbi.com/"},
+          "privacy": {"url": "https://soundbi.com/"},
+          "terms": {"url": "https://soundbi.com/"},
+          "license": {"url": "https://azuremarketplace.microsoft.com"}
       }
     },
     "itemJobTypes" :["storeData", "others"],

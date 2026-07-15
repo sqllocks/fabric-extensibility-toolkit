@@ -176,6 +176,11 @@ $placeholders = @{
     "{{ITEM_NAMES}}" = $itemNames
     "{{FRONTEND_APPID}}" = $FrontendAppId
     "{{BACKEND_APPID}}" = $BackendAppId
+    # STORY-074: at the moment only FERemote hosting is supported (see .env.template),
+    # so this is a fixed value, not environment-specific. Previously missing entirely,
+    # so every generated .env.* file was left with the literal, un-substituted
+    # "{{WORKLOAD_HOSTING_TYPE}}" placeholder string.
+    "{{WORKLOAD_HOSTING_TYPE}}" = "FERemote"
 }
 
 # Environment-specific configurations

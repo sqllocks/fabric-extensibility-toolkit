@@ -1,13 +1,16 @@
 {
-    "Workload_Display_Name": "Hello Fabric!",
-    "Workload_Full_Display_Name": "Hello Fabric!",
-    "Workload_Description": "See how to build, customize, and publish your first Fabric workload in minutes.",
-    "Workload_Hub_Slogan": "The fastest way to build, test, and publish your first Fabric workload.",
-    "Workload_Hub_Description": "Add a brief description of your workload here. Explain what it does, its main benefits, and who it's for. This is your opportunity to give users a clear and concise overview.\n\n**You can:**\n\n• Highlight a key feature or benefit of your workload.\n• Describe another important capability or use case.\n• Explain a core concept or how users can get started.\n• List another key selling point or feature.",
-    "Workload_Hub_GetStarted_1_Title": "Title1",    
-    "Workload_Hub_GetStarted_1_Sub_Title": "SubTitle1",
-    "Workload_Hub_GetStarted_1_Description": "Card1 description",
-    "HelloWorldItem_DisplayName": "Hello World",
-    "HelloWorldItem_DisplayName_Plural": "Hello Worlds",
-    "HelloWorldItem_Description": "A Hello World Item to start your Dev Experience"
+    "Workload_Display_Name": "Sound Management",
+    "Workload_Full_Display_Name": "Sound Management",
+    "Workload_Description": "Incident, compliance, and capacity management for your Fabric, Synapse, and ADF estate, surfaced directly in Fabric.",
+    "Workload_Hub_Slogan": "Incidents, compliance, and capacity, in one place.",
+    "Workload_Hub_Description": "Sound Management brings incident tracking, compliance assessments, and capacity monitoring for your Fabric, Synapse, and ADF estate directly into the Fabric workspace you already use.\n\n**You can:**\n\n• Review and act on incidents raised against your data estate without leaving Fabric.\n• Track compliance assessments and their findings against your governance policies.\n• See capacity overload and tenant-isolation posture alongside the items they affect.",
+    "Workload_Hub_GetStarted_1_Title": "See an incident in context",
+    "Workload_Hub_GetStarted_1_Sub_Title": "Open an incident item from a workspace",
+    "Workload_Hub_GetStarted_1_Description": "Incidents and compliance assessments are created by Sound Management and appear as items in your workspace, ready to review.",
+    "IncidentItem_DisplayName": "Incident",
+    "IncidentItem_DisplayName_Plural": "Incidents",
+    "IncidentItem_Description": "An incident raised against your Fabric, Synapse, or ADF estate, tracked by Sound Management.",
+    "ComplianceAssessmentItem_DisplayName": "Compliance Assessment",
+    "ComplianceAssessmentItem_DisplayName_Plural": "Compliance Assessments",
+    "ComplianceAssessmentItem_Description": "A compliance assessment and its findings, tracked by Sound Management."
 }

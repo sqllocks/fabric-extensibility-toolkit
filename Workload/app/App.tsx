@@ -2,7 +2,8 @@ import React from "react";
 import { Route, Router, Switch } from "react-router-dom";
 import { History } from "history";
 import { WorkloadClientAPI } from "@ms-fabric/workload-client";
-import { HelloWorldItemEditor} from "./items/HelloWorldItem";
+import { IncidentItemEditor } from "./items/IncidentItem";
+import { ComplianceAssessmentItemEditor } from "./items/ComplianceAssessmentItem";
 import { ConditionalPlaygroundRoutes } from "./playground/ConditionalPlaygroundRoutes";
 
 /*
@@ -43,10 +44,16 @@ export function App({ history, workloadClient }: AppProps) {
             </div>
         </Route>    
         <Switch>
-            {/* Routings for the Hello World Item Editor */}
-            <Route path="/HelloWorldItem-editor/:itemObjectId">
-                <HelloWorldItemEditor
-                    workloadClient={workloadClient} data-testid="HelloWorldItem-editor" />
+            {/* Routings for the Incident Item Editor */}
+            <Route path="/IncidentItem-editor/:itemObjectId">
+                <IncidentItemEditor
+                    workloadClient={workloadClient} data-testid="IncidentItem-editor" />
+            </Route>
+
+            {/* Routings for the Compliance Assessment Item Editor */}
+            <Route path="/ComplianceAssessmentItem-editor/:itemObjectId">
+                <ComplianceAssessmentItemEditor
+                    workloadClient={workloadClient} data-testid="ComplianceAssessmentItem-editor" />
             </Route>
 
             {/* Conditionally loaded playground routes (only in development) */}
