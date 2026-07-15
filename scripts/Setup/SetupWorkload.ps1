@@ -169,12 +169,20 @@ if (Test-Path $itemsDir) {
     }
 }
 
+# STORY-077: Fabric enforces an "Org." prefix on WorkloadName for dev connection
+# and Test upload specifically (other prefixes cause an upload failure); the
+# cross-tenant Publisher.Workload name (e.g. SoundBI.SoundManagement) only
+# applies at the actual Hub-publish step. So WORKLOAD_NAME must differ between
+# dev/test and prod, derive the dev/test Org.* variant from whatever was passed
+# in so it stays correct if the publisher-prefixed name changes.
+$workloadIdPart = ($WorkloadName -split '\.', 2)[-1]
+if ([string]::IsNullOrWhiteSpace($workloadIdPart)) { $workloadIdPart = $WorkloadName }
+$devTestWorkloadName = "Org.$workloadIdPart"
+
 # Define placeholder replacements for different environments
 $placeholders = @{
     "{{WORKLOAD_VERSION}}" = $WorkloadVersion
-    "{{WORKLOAD_NAME}}" = $WorkloadName
     "{{ITEM_NAMES}}" = $itemNames
-    "{{FRONTEND_APPID}}" = $FrontendAppId
     "{{BACKEND_APPID}}" = $BackendAppId
     # STORY-074: at the moment only FERemote hosting is supported (see .env.template),
     # so this is a fixed value, not environment-specific. Previously missing entirely,
@@ -184,20 +192,33 @@ $placeholders = @{
 }
 
 # Environment-specific configurations
+# NOTE (STORY-077): FRONTEND_APPID is NOT split by environment below - this script
+# still only takes one $FrontendAppId. Since dev/test need an Entra app registered
+# under the Org.* name (different redirect URIs than a prod app registered under
+# the Publisher.Workload name), running this script for a fresh dev/test setup
+# still requires passing the correct dev-scoped -FrontendAppId explicitly, or
+# letting the prompt below create one via CreateDevAADApp.ps1 with WORKLOAD_NAME
+# already forced to the Org.* form.
 $environments = @{
     "dev" = @{
+        "{{WORKLOAD_NAME}}" = $devTestWorkloadName
+        "{{FRONTEND_APPID}}" = $FrontendAppId
         "{{FRONTEND_URL}}" = "http://localhost:60006/"
         "{{LOG_LEVEL}}" = "debug"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = "-dev"
         "{{ENABLE_PLAYGROUND}}" = "true"
     }
     "test" = @{
+        "{{WORKLOAD_NAME}}" = $devTestWorkloadName
+        "{{FRONTEND_APPID}}" = $FrontendAppId
         "{{FRONTEND_URL}}" = "https://test-fe.yourappdomain.com/"
         "{{LOG_LEVEL}}" = "info"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = "-test"
         "{{ENABLE_PLAYGROUND}}" = "true"
     }
     "prod" = @{
+        "{{WORKLOAD_NAME}}" = $WorkloadName
+        "{{FRONTEND_APPID}}" = $FrontendAppId
         "{{FRONTEND_URL}}" = "https://prod-fe.yourappdomain.com/"
         "{{LOG_LEVEL}}" = "warn"
         "{{ENVIRONMENT_DISPLAY_NAME_SUFFIX}}" = ""
